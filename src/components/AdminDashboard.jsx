@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import AdminLayout from './admin/AdminLayout';
 import TruckManagement from './admin/TruckManagement';
 import ProjectManagement from './admin/ProjectManagement';
 import PointManagement from './admin/PointManagement';
 import RecordsView from './admin/RecordsView';
 import Dashboard from './admin/Dashboard';
+import WorkspaceManagement from './admin/WorkspaceManagement';
 
 const AdminDashboard = () => {
   return (
@@ -17,6 +17,7 @@ const AdminDashboard = () => {
         <Route path="/projects" element={<ProjectManagement />} />
         <Route path="/points" element={<PointManagement />} />
         <Route path="/records" element={<RecordsView />} />
+        <Route path="/workspaces" element={<WorkspaceManagement />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>
     </AdminLayout>

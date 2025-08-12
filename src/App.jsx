@@ -6,20 +6,24 @@ import Register from './components/Register';
 import AdminDashboard from './components/AdminDashboard';
 import CheckerDashboard from './components/CheckerDashboard';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { WorkspaceProvider } from './context/WorkspaceContext';
 import { DataProvider } from './context/DataContext';
 import LoadingSpinner from './components/common/LoadingSpinner';
 
+// Componente que maneja el contenido de la app basado en la autenticación
 function AppContent() {
   const { user, loading } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
+    // Agregamos un pequeño retraso para evitar parpadeos en la carga inicial
     const timer = setTimeout(() => {
       setIsInitialized(true);
     }, 500);
     return () => clearTimeout(timer);
   }, []);
 
+  // Mostrar spinner mientras se carga la autenticación
   if (loading || !isInitialized) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -35,19 +39,22 @@ function AppContent() {
         <Route path="/register" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/checker'} replace /> : <Register />} />
         <Route path="/admin/*" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/login" replace />} />
         <Route path="/checker" element={user && user.role === 'checker' ? <CheckerDashboard /> : <Navigate to="/login" replace />} />
-        <Route path="/" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : '/checker') : '/login'} replace />} />
+        <Route path="/*" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : '/checker') : '/login'} replace />} />
       </Routes>
     </AnimatePresence>
   );
 }
 
+// Componente principal de la aplicación
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <DataProvider>
-          <AppContent />
-        </DataProvider>
+        <WorkspaceProvider>
+          <DataProvider>
+            <AppContent />
+          </DataProvider>
+        </WorkspaceProvider>
       </AuthProvider>
     </Router>
   );

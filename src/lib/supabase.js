@@ -9,12 +9,29 @@ if (SUPABASE_URL === 'https://<PROJECT-ID>.supabase.co' || SUPABASE_ANON_KEY ===
   throw new Error('Missing Supabase environment variables');
 }
 
-// Crear cliente Supabase
+// Crear cliente Supabase con persistencia de sesión mejorada
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    storage: {
+      // Usar localStorage para persistencia de sesión
+      getItem: (key) => {
+        const value = localStorage.getItem(key);
+        try {
+          return value ? JSON.parse(value) : null;
+        } catch (error) {
+          return null;
+        }
+      },
+      setItem: (key, value) => {
+        localStorage.setItem(key, JSON.stringify(value));
+      },
+      removeItem: (key) => {
+        localStorage.removeItem(key);
+      }
+    }
   }
 });
 

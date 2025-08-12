@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import supabase from '../lib/supabase';
+import { useWorkspace } from './WorkspaceContext';
 
 const DataContext = createContext();
 
@@ -17,6 +18,7 @@ export const DataProvider = ({ children }) => {
   const [exitPoints, setExitPoints] = useState([]);
   const [deliveryPoints, setDeliveryPoints] = useState([]);
   const [records, setRecords] = useState([]);
+  const { currentWorkspace } = useWorkspace();
   const [loading, setLoading] = useState({
     trucks: false,
     projects: false,
@@ -47,25 +49,40 @@ export const DataProvider = ({ children }) => {
     if (storedRecords) setRecords(JSON.parse(storedRecords));
   }, []);
 
-  // Fetch data from Supabase when authenticated
+  // Fetch data from Supabase when authenticated or workspace changes
   useEffect(() => {
     const fetchData = async () => {
       try {
         // Fetch projects
         setLoading((prev) => ({ ...prev, projects: true }));
-        const { data: projectsData, error: projectsError } = await supabase
+        let projectsQuery = supabase
           .from('projects_a18')
           .select('*')
           .order('created_at', { ascending: false });
 
+        // Si hay un workspace seleccionado, filtrar por workspace_id
+        if (currentWorkspace) {
+          projectsQuery = projectsQuery.eq('workspace_id', currentWorkspace.id);
+        }
+
+        const { data: projectsData, error: projectsError } = await projectsQuery;
+
         if (projectsError) {
-          throw new Error(projectsError.message);
+          console.error('Error fetching projects:', projectsError);
+          setError((prev) => ({ ...prev, projects: projectsError.message }));
+          // Use cached data if available
+          const storedProjects = localStorage.getItem('truckApp_projects');
+          if (storedProjects) {
+            console.log('Using cached projects data');
+            setProjects(JSON.parse(storedProjects));
+          }
         } else {
           const formattedProjects = projectsData.map(project => ({
             id: project.id,
             name: project.name,
             description: project.description,
-            location: project.location
+            location: project.location,
+            workspaceId: project.workspace_id
           }));
           setProjects(formattedProjects);
           localStorage.setItem('truckApp_projects', JSON.stringify(formattedProjects));
@@ -73,6 +90,12 @@ export const DataProvider = ({ children }) => {
       } catch (err) {
         console.error('Error fetching projects:', err);
         setError((prev) => ({ ...prev, projects: err.message }));
+        // Use cached data if available
+        const storedProjects = localStorage.getItem('truckApp_projects');
+        if (storedProjects) {
+          console.log('Using cached projects data after exception');
+          setProjects(JSON.parse(storedProjects));
+        }
       } finally {
         setLoading((prev) => ({ ...prev, projects: false }));
       }
@@ -86,7 +109,13 @@ export const DataProvider = ({ children }) => {
           .order('created_at', { ascending: false });
 
         if (exitPointsError) {
-          throw new Error(exitPointsError.message);
+          console.error('Error fetching exit points:', exitPointsError);
+          setError((prev) => ({ ...prev, exitPoints: exitPointsError.message }));
+          // Use cached data if available
+          const storedExitPoints = localStorage.getItem('truckApp_exitPoints');
+          if (storedExitPoints) {
+            setExitPoints(JSON.parse(storedExitPoints));
+          }
         } else {
           const formattedExitPoints = exitPointsData.map(point => ({
             id: point.id,
@@ -99,6 +128,11 @@ export const DataProvider = ({ children }) => {
       } catch (err) {
         console.error('Error fetching exit points:', err);
         setError((prev) => ({ ...prev, exitPoints: err.message }));
+        // Use cached data if available
+        const storedExitPoints = localStorage.getItem('truckApp_exitPoints');
+        if (storedExitPoints) {
+          setExitPoints(JSON.parse(storedExitPoints));
+        }
       } finally {
         setLoading((prev) => ({ ...prev, exitPoints: false }));
       }
@@ -112,7 +146,13 @@ export const DataProvider = ({ children }) => {
           .order('created_at', { ascending: false });
 
         if (deliveryPointsError) {
-          throw new Error(deliveryPointsError.message);
+          console.error('Error fetching delivery points:', deliveryPointsError);
+          setError((prev) => ({ ...prev, deliveryPoints: deliveryPointsError.message }));
+          // Use cached data if available
+          const storedDeliveryPoints = localStorage.getItem('truckApp_deliveryPoints');
+          if (storedDeliveryPoints) {
+            setDeliveryPoints(JSON.parse(storedDeliveryPoints));
+          }
         } else {
           const formattedDeliveryPoints = deliveryPointsData.map(point => ({
             id: point.id,
@@ -125,6 +165,11 @@ export const DataProvider = ({ children }) => {
       } catch (err) {
         console.error('Error fetching delivery points:', err);
         setError((prev) => ({ ...prev, deliveryPoints: err.message }));
+        // Use cached data if available
+        const storedDeliveryPoints = localStorage.getItem('truckApp_deliveryPoints');
+        if (storedDeliveryPoints) {
+          setDeliveryPoints(JSON.parse(storedDeliveryPoints));
+        }
       } finally {
         setLoading((prev) => ({ ...prev, deliveryPoints: false }));
       }
@@ -138,7 +183,13 @@ export const DataProvider = ({ children }) => {
           .order('created_at', { ascending: false });
 
         if (trucksError) {
-          throw new Error(trucksError.message);
+          console.error('Error fetching trucks:', trucksError);
+          setError((prev) => ({ ...prev, trucks: trucksError.message }));
+          // Use cached data if available
+          const storedTrucks = localStorage.getItem('truckApp_trucks');
+          if (storedTrucks) {
+            setTrucks(JSON.parse(storedTrucks));
+          }
         } else {
           const formattedTrucks = trucksData.map(truck => ({
             id: truck.id,
@@ -156,6 +207,11 @@ export const DataProvider = ({ children }) => {
       } catch (err) {
         console.error('Error fetching trucks:', err);
         setError((prev) => ({ ...prev, trucks: err.message }));
+        // Use cached data if available
+        const storedTrucks = localStorage.getItem('truckApp_trucks');
+        if (storedTrucks) {
+          setTrucks(JSON.parse(storedTrucks));
+        }
       } finally {
         setLoading((prev) => ({ ...prev, trucks: false }));
       }
@@ -169,7 +225,13 @@ export const DataProvider = ({ children }) => {
           .order('created_at', { ascending: false });
 
         if (recordsError) {
-          throw new Error(recordsError.message);
+          console.error('Error fetching records:', recordsError);
+          setError((prev) => ({ ...prev, records: recordsError.message }));
+          // Use cached data if available
+          const storedRecords = localStorage.getItem('truckApp_records');
+          if (storedRecords) {
+            setRecords(JSON.parse(storedRecords));
+          }
         } else {
           const formattedRecords = recordsData.map(record => ({
             id: record.id,
@@ -188,6 +250,11 @@ export const DataProvider = ({ children }) => {
       } catch (err) {
         console.error('Error fetching records:', err);
         setError((prev) => ({ ...prev, records: err.message }));
+        // Use cached data if available
+        const storedRecords = localStorage.getItem('truckApp_records');
+        if (storedRecords) {
+          setRecords(JSON.parse(storedRecords));
+        }
       } finally {
         setLoading((prev) => ({ ...prev, records: false }));
       }
@@ -206,12 +273,18 @@ export const DataProvider = ({ children }) => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'records_a18' }, fetchData)
       .subscribe();
 
+    const projectsSubscription = supabase
+      .channel('projects_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects_a18' }, fetchData)
+      .subscribe();
+
     // Clean up subscriptions
     return () => {
       supabase.removeChannel(trucksSubscription);
       supabase.removeChannel(recordsSubscription);
+      supabase.removeChannel(projectsSubscription);
     };
-  }, []);
+  }, [currentWorkspace]);
 
   // Add truck to Supabase
   const addTruck = async (truck) => {
@@ -244,17 +317,15 @@ export const DataProvider = ({ children }) => {
       const updatedTrucks = [...trucks, newTruck];
       setTrucks(updatedTrucks);
       localStorage.setItem('truckApp_trucks', JSON.stringify(updatedTrucks));
-      
+
       return data[0];
     } catch (err) {
       console.error('Error in addTruck:', err);
-      
       // Fallback to local storage only
       const newTruck = { ...truck, id: Date.now().toString() };
       const updatedTrucks = [...trucks, newTruck];
       setTrucks(updatedTrucks);
       localStorage.setItem('truckApp_trucks', JSON.stringify(updatedTrucks));
-      
       throw err;
     }
   };
@@ -262,14 +333,19 @@ export const DataProvider = ({ children }) => {
   // Add project to Supabase
   const addProject = async (project) => {
     try {
-      // Insert to Supabase
+      if (!currentWorkspace) {
+        throw new Error('No hay un workspace seleccionado');
+      }
+
+      // Insert to Supabase with workspace_id
       const { data, error } = await supabase
         .from('projects_a18')
         .insert([
           {
             name: project.name,
             description: project.description,
-            location: project.location
+            location: project.location,
+            workspace_id: currentWorkspace.id
           }
         ])
         .select();
@@ -280,21 +356,19 @@ export const DataProvider = ({ children }) => {
       }
 
       // Also update local state and storage for offline use
-      const newProject = { ...project, id: data[0].id };
+      const newProject = { ...project, id: data[0].id, workspaceId: currentWorkspace.id };
       const updatedProjects = [...projects, newProject];
       setProjects(updatedProjects);
       localStorage.setItem('truckApp_projects', JSON.stringify(updatedProjects));
-      
+
       return data[0];
     } catch (err) {
       console.error('Error in addProject:', err);
-      
       // Fallback to local storage only
-      const newProject = { ...project, id: Date.now().toString() };
+      const newProject = { ...project, id: Date.now().toString(), workspaceId: currentWorkspace?.id };
       const updatedProjects = [...projects, newProject];
       setProjects(updatedProjects);
       localStorage.setItem('truckApp_projects', JSON.stringify(updatedProjects));
-      
       throw err;
     }
   };
@@ -323,17 +397,15 @@ export const DataProvider = ({ children }) => {
       const updatedPoints = [...exitPoints, newPoint];
       setExitPoints(updatedPoints);
       localStorage.setItem('truckApp_exitPoints', JSON.stringify(updatedPoints));
-      
+
       return data[0];
     } catch (err) {
       console.error('Error in addExitPoint:', err);
-      
       // Fallback to local storage only
       const newPoint = { ...point, id: Date.now().toString() };
       const updatedPoints = [...exitPoints, newPoint];
       setExitPoints(updatedPoints);
       localStorage.setItem('truckApp_exitPoints', JSON.stringify(updatedPoints));
-      
       throw err;
     }
   };
@@ -362,17 +434,15 @@ export const DataProvider = ({ children }) => {
       const updatedPoints = [...deliveryPoints, newPoint];
       setDeliveryPoints(updatedPoints);
       localStorage.setItem('truckApp_deliveryPoints', JSON.stringify(updatedPoints));
-      
+
       return data[0];
     } catch (err) {
       console.error('Error in addDeliveryPoint:', err);
-      
       // Fallback to local storage only
       const newPoint = { ...point, id: Date.now().toString() };
       const updatedPoints = [...deliveryPoints, newPoint];
       setDeliveryPoints(updatedPoints);
       localStorage.setItem('truckApp_deliveryPoints', JSON.stringify(updatedPoints));
-      
       throw err;
     }
   };
@@ -386,7 +456,7 @@ export const DataProvider = ({ children }) => {
 
       // Check if a record with this nfcTag exists and doesn't have deliveryTime
       const existingRecord = records.find(r => 
-        r.nfcTag === record.nfcTag && !r.deliveryTime
+        r.nfcTag === record.nfcTag && !r.deliveryTime 
       );
 
       if (existingRecord) {
@@ -408,13 +478,11 @@ export const DataProvider = ({ children }) => {
 
         // Update local state and storage
         const updatedRecords = records.map(r => 
-          r.id === existingRecord.id 
-            ? { ...r, ...record } 
-            : r
+          r.id === existingRecord.id ? {...r, ...record} : r 
         );
         setRecords(updatedRecords);
         localStorage.setItem('truckApp_records', JSON.stringify(updatedRecords));
-        
+
         return data[0];
       } else {
         // Insert new record
@@ -441,25 +509,21 @@ export const DataProvider = ({ children }) => {
         }
 
         // Update local state and storage
-        const newRecord = { 
-          ...record, 
-          id: data[0].id 
-        };
+        const newRecord = { ...record, id: data[0].id };
         const updatedRecords = [...records, newRecord];
         setRecords(updatedRecords);
         localStorage.setItem('truckApp_records', JSON.stringify(updatedRecords));
-        
+
         return data[0];
       }
     } catch (err) {
       console.error('Error in addRecord:', err);
-      
       // Fallback to local storage only
       const updatedRecords = [...records];
       const existingIndex = updatedRecords.findIndex(r => 
-        r.nfcTag === record.nfcTag && !r.deliveryTime
+        r.nfcTag === record.nfcTag && !r.deliveryTime 
       );
-      
+
       if (existingIndex !== -1) {
         // Update existing record
         updatedRecords[existingIndex] = { ...updatedRecords[existingIndex], ...record };
@@ -467,10 +531,9 @@ export const DataProvider = ({ children }) => {
         // Add new record
         updatedRecords.push({ ...record, id: Date.now().toString() });
       }
-      
+
       setRecords(updatedRecords);
       localStorage.setItem('truckApp_records', JSON.stringify(updatedRecords));
-      
       throw err;
     }
   };

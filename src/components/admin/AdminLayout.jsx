@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 
-const { FiTruck, FiSettings, FiMapPin, FiFileText, FiLogOut, FiHome, FiFolder, FiMenu, FiX } = FiIcons;
+const { FiTruck, FiSettings, FiMapPin, FiFileText, FiLogOut, FiHome, FiFolder, FiMenu, FiX, FiBriefcase } = FiIcons;
 
 const AdminLayout = ({ children }) => {
   const { user, logout } = useAuth();
@@ -18,6 +18,7 @@ const AdminLayout = ({ children }) => {
     { name: 'Proyectos', href: '/admin/projects', icon: FiFolder },
     { name: 'Puntos', href: '/admin/points', icon: FiMapPin },
     { name: 'Registros', href: '/admin/records', icon: FiFileText },
+    { name: 'Workspaces', href: '/admin/workspaces', icon: FiBriefcase },
   ];
 
   const closeSidebar = () => {
@@ -166,9 +167,7 @@ const AdminLayout = ({ children }) => {
 
         {/* Main Content */}
         <div className="flex-1 min-w-0">
-          <main className="p-4 lg:p-8">
-            {children}
-          </main>
+          <main className="p-4 lg:p-8">{children}</main>
         </div>
       </div>
     </div>
