@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 
 const Register = () => {
   const navigate = useNavigate();
-  const { signUp } = useAuth();
+  const { signUp, authError } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -76,7 +76,7 @@ const Register = () => {
       }, 2000);
     } catch (err) {
       console.error('Error de registro:', err);
-      setError(err.message || 'Error al registrar usuario');
+      setError(err.message || authError || 'Error al registrar usuario');
     } finally {
       setLoading(false);
     }

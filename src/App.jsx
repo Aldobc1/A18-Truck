@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Login from './components/Login';
+import Register from './components/Register';
 import AdminDashboard from './components/AdminDashboard';
 import CheckerDashboard from './components/CheckerDashboard';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -30,40 +31,11 @@ function AppContent() {
   return (
     <AnimatePresence mode="wait">
       <Routes>
-        <Route 
-          path="/login" 
-          element={
-            user ? 
-              <Navigate to={user.role === 'admin' ? '/admin' : '/checker'} replace /> : 
-              <Login />
-          } 
-        />
-        <Route 
-          path="/admin/*" 
-          element={
-            user && user.role === 'admin' ? 
-              <AdminDashboard /> : 
-              <Navigate to="/login" replace />
-          } 
-        />
-        <Route 
-          path="/checker" 
-          element={
-            user && user.role === 'checker' ? 
-              <CheckerDashboard /> : 
-              <Navigate to="/login" replace />
-          } 
-        />
-        <Route 
-          path="/" 
-          element={
-            <Navigate to={
-              user ? 
-                (user.role === 'admin' ? '/admin' : '/checker') : 
-                '/login'
-            } replace />
-          } 
-        />
+        <Route path="/login" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/checker'} replace /> : <Login />} />
+        <Route path="/register" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/checker'} replace /> : <Register />} />
+        <Route path="/admin/*" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/login" replace />} />
+        <Route path="/checker" element={user && user.role === 'checker' ? <CheckerDashboard /> : <Navigate to="/login" replace />} />
+        <Route path="/" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : '/checker') : '/login'} replace />} />
       </Routes>
     </AnimatePresence>
   );

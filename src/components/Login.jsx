@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
-const { FiTruck, FiUser, FiLock, FiLogIn, FiEye, FiEyeOff } = FiIcons;
+const { FiTruck, FiUser, FiLock, FiLogIn, FiEye, FiEyeOff, FiAlertCircle, FiUserPlus } = FiIcons;
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -12,7 +13,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { login, authError } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,7 +23,7 @@ const Login = () => {
     try {
       await login(email, password);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Error al iniciar sesión');
     } finally {
       setLoading(false);
     }
@@ -91,13 +92,16 @@ const Login = () => {
             </div>
           </div>
 
-          {error && (
+          {(error || authError) && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm"
+              className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg"
             >
-              {error}
+              <div className="flex items-center">
+                <SafeIcon icon={FiAlertCircle} className="w-5 h-5 mr-2" />
+                <p className="text-sm">{error || authError}</p>
+              </div>
             </motion.div>
           )}
 
@@ -118,6 +122,15 @@ const Login = () => {
             )}
           </motion.button>
         </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            ¿No tienes una cuenta?{' '}
+            <Link to="/register" className="text-blue-600 hover:text-blue-800 font-medium">
+              Regístrate aquí
+            </Link>
+          </p>
+        </div>
 
         <div className="mt-8 p-4 bg-gray-50 rounded-lg">
           <p className="text-sm text-gray-600 mb-2">Credenciales de prueba:</p>

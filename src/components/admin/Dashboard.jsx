@@ -1,13 +1,39 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useData } from '../../context/DataContext';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
+import supabase from '../../lib/supabase';
 
-const { FiTruck, FiFolder, FiMapPin, FiFileText, FiTrendingUp } = FiIcons;
+const { FiTruck, FiFolder, FiMapPin, FiFileText, FiTrendingUp, FiDatabase } = FiIcons;
 
 const Dashboard = () => {
   const { trucks, projects, exitPoints, deliveryPoints, records } = useData();
+  const [supabaseStatus, setSupabaseStatus] = useState('checking');
+  
+  useEffect(() => {
+    // Check Supabase connection
+    const checkConnection = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('projects_a18')
+          .select('count')
+          .limit(1);
+          
+        if (error) {
+          console.error('Supabase connection error:', error);
+          setSupabaseStatus('error');
+        } else {
+          setSupabaseStatus('connected');
+        }
+      } catch (err) {
+        console.error('Unexpected error checking Supabase:', err);
+        setSupabaseStatus('error');
+      }
+    };
+    
+    checkConnection();
+  }, []);
 
   const stats = [
     {
@@ -44,9 +70,27 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6 lg:space-y-8">
-      <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-        <p className="text-gray-600 text-sm lg:text-base">Resumen del sistema de control de camiones</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+          <p className="text-gray-600 text-sm lg:text-base">Resumen del sistema de control de camiones</p>
+        </div>
+        <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full ${
+          supabaseStatus === 'connected' 
+            ? 'bg-green-100 text-green-700' 
+            : supabaseStatus === 'error'
+            ? 'bg-red-100 text-red-700'
+            : 'bg-yellow-100 text-yellow-700'
+        }`}>
+          <SafeIcon icon={FiDatabase} className="w-4 h-4" />
+          <span className="text-sm font-medium">
+            {supabaseStatus === 'connected' 
+              ? 'Base de datos conectada' 
+              : supabaseStatus === 'error'
+              ? 'Error de conexión'
+              : 'Verificando conexión...'}
+          </span>
+        </div>
       </div>
 
       {/* Stats Grid */}
