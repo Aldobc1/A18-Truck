@@ -2,18 +2,21 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
+import { useWorkspace } from '../../context/WorkspaceContext';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 
-const { 
-  FiTruck, FiSettings, FiMapPin, FiFileText, FiLogOut, 
-  FiHome, FiFolder, FiMenu, FiX, FiBriefcase, FiUser
+const {
+  FiTruck, FiSettings, FiMapPin, FiFileText, FiLogOut, FiHome, 
+  FiFolder, FiMenu, FiX, FiBriefcase, FiUser, FiChevronDown
 } = FiIcons;
 
 const AdminLayout = ({ children }) => {
   const { user, logout } = useAuth();
+  const { workspaces, currentWorkspace, switchWorkspace } = useWorkspace();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [workspaceDropdownOpen, setWorkspaceDropdownOpen] = useState(false);
 
   const navigation = [
     { name: 'Dashboard', href: '/admin', icon: FiHome },
@@ -28,6 +31,11 @@ const AdminLayout = ({ children }) => {
     setSidebarOpen(false);
   };
 
+  const handleWorkspaceChange = (workspaceId) => {
+    switchWorkspace(workspaceId);
+    setWorkspaceDropdownOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile Header */}
@@ -40,8 +48,8 @@ const AdminLayout = ({ children }) => {
               <p className="text-xs text-gray-600 truncate max-w-32">{user.email}</p>
             </div>
           </div>
-          <button 
-            onClick={() => setSidebarOpen(true)} 
+          <button
+            onClick={() => setSidebarOpen(true)}
             className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
           >
             <SafeIcon icon={FiMenu} className="w-5 h-5" />
@@ -61,16 +69,73 @@ const AdminLayout = ({ children }) => {
               </div>
             </div>
           </div>
+
+          {/* Workspace Selector */}
+          <div className="p-4 border-b border-gray-200">
+            <div className="relative">
+              <button
+                onClick={() => setWorkspaceDropdownOpen(!workspaceDropdownOpen)}
+                className="w-full flex items-center justify-between p-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+              >
+                <div className="flex items-center space-x-2">
+                  <SafeIcon icon={FiBriefcase} className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm font-medium text-gray-800 truncate max-w-[160px]">
+                    {currentWorkspace ? currentWorkspace.name : 'Seleccionar Workspace'}
+                  </span>
+                </div>
+                <SafeIcon 
+                  icon={FiChevronDown} 
+                  className={`w-4 h-4 text-gray-500 transition-transform ${workspaceDropdownOpen ? 'transform rotate-180' : ''}`} 
+                />
+              </button>
+              
+              {/* Dropdown */}
+              {workspaceDropdownOpen && (
+                <div className="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg border border-gray-200 py-1 max-h-48 overflow-auto">
+                  {workspaces.length > 0 ? (
+                    workspaces.map((workspace) => (
+                      <button
+                        key={workspace.id}
+                        onClick={() => handleWorkspaceChange(workspace.id)}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2 ${
+                          currentWorkspace && currentWorkspace.id === workspace.id ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                        }`}
+                      >
+                        <SafeIcon 
+                          icon={FiBriefcase} 
+                          className={`w-4 h-4 ${currentWorkspace && currentWorkspace.id === workspace.id ? 'text-blue-600' : 'text-gray-400'}`} 
+                        />
+                        <span className="truncate">{workspace.name}</span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-sm text-gray-500">No hay workspaces disponibles</div>
+                  )}
+                  <div className="border-t border-gray-100 mt-1 pt-1">
+                    <Link
+                      to="/admin/workspaces"
+                      className="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-gray-100 flex items-center space-x-2"
+                      onClick={() => setWorkspaceDropdownOpen(false)}
+                    >
+                      <SafeIcon icon={FiSettings} className="w-4 h-4" />
+                      <span>Gestionar workspaces</span>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           <nav className="mt-5">
             {navigation.map((item) => {
               const isActive = location.pathname === item.href;
               return (
-                <Link 
-                  key={item.name} 
+                <Link
+                  key={item.name}
                   to={item.href}
                   className={`flex items-center px-5 py-3 text-sm font-medium transition-colors ${
-                    isActive 
-                      ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600' 
+                    isActive
+                      ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -80,6 +145,7 @@ const AdminLayout = ({ children }) => {
               );
             })}
           </nav>
+
           <div className="absolute bottom-0 w-64 p-5 border-t border-gray-200">
             <div className="flex items-center space-x-3 mb-4">
               <div className="bg-gray-100 p-2 rounded-full">
@@ -92,9 +158,8 @@ const AdminLayout = ({ children }) => {
                 <p className="text-xs text-gray-500 truncate">{user.role === 'admin' ? 'Administrador' : 'Usuario'}</p>
               </div>
             </div>
-            
-            <button 
-              onClick={logout} 
+            <button
+              onClick={logout}
               className="flex items-center space-x-2 text-gray-600 hover:text-red-600 transition-colors w-full"
             >
               <SafeIcon icon={FiLogOut} className="w-5 h-5" />
@@ -134,12 +199,74 @@ const AdminLayout = ({ children }) => {
                         <p className="text-xs text-gray-600 truncate">{user.email}</p>
                       </div>
                     </div>
-                    <button 
-                      onClick={closeSidebar} 
+                    <button
+                      onClick={closeSidebar}
                       className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
                     >
                       <SafeIcon icon={FiX} className="w-5 h-5" />
                     </button>
+                  </div>
+                </div>
+
+                {/* Mobile Workspace Selector */}
+                <div className="p-4 border-b border-gray-200">
+                  <div className="relative">
+                    <button
+                      onClick={() => setWorkspaceDropdownOpen(!workspaceDropdownOpen)}
+                      className="w-full flex items-center justify-between p-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <SafeIcon icon={FiBriefcase} className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm font-medium text-gray-800 truncate max-w-[160px]">
+                          {currentWorkspace ? currentWorkspace.name : 'Seleccionar Workspace'}
+                        </span>
+                      </div>
+                      <SafeIcon 
+                        icon={FiChevronDown} 
+                        className={`w-4 h-4 text-gray-500 transition-transform ${workspaceDropdownOpen ? 'transform rotate-180' : ''}`} 
+                      />
+                    </button>
+                    
+                    {/* Mobile Dropdown */}
+                    {workspaceDropdownOpen && (
+                      <div className="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg border border-gray-200 py-1 max-h-48 overflow-auto">
+                        {workspaces.length > 0 ? (
+                          workspaces.map((workspace) => (
+                            <button
+                              key={workspace.id}
+                              onClick={() => {
+                                handleWorkspaceChange(workspace.id);
+                                closeSidebar();
+                              }}
+                              className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2 ${
+                                currentWorkspace && currentWorkspace.id === workspace.id ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                              }`}
+                            >
+                              <SafeIcon 
+                                icon={FiBriefcase} 
+                                className={`w-4 h-4 ${currentWorkspace && currentWorkspace.id === workspace.id ? 'text-blue-600' : 'text-gray-400'}`} 
+                              />
+                              <span className="truncate">{workspace.name}</span>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-3 py-2 text-sm text-gray-500">No hay workspaces disponibles</div>
+                        )}
+                        <div className="border-t border-gray-100 mt-1 pt-1">
+                          <Link
+                            to="/admin/workspaces"
+                            className="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-gray-100 flex items-center space-x-2"
+                            onClick={() => {
+                              setWorkspaceDropdownOpen(false);
+                              closeSidebar();
+                            }}
+                          >
+                            <SafeIcon icon={FiSettings} className="w-4 h-4" />
+                            <span>Gestionar workspaces</span>
+                          </Link>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -165,13 +292,13 @@ const AdminLayout = ({ children }) => {
                   {navigation.map((item) => {
                     const isActive = location.pathname === item.href;
                     return (
-                      <Link 
-                        key={item.name} 
+                      <Link
+                        key={item.name}
                         to={item.href}
                         onClick={closeSidebar}
                         className={`flex items-center px-4 py-3 text-sm font-medium transition-colors ${
-                          isActive 
-                            ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600' 
+                          isActive
+                            ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
                             : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                         }`}
                       >
@@ -184,8 +311,8 @@ const AdminLayout = ({ children }) => {
 
                 {/* Logout Button */}
                 <div className="p-4 border-t border-gray-200 mt-auto">
-                  <button 
-                    onClick={logout} 
+                  <button
+                    onClick={logout}
                     className="flex items-center space-x-2 text-gray-600 hover:text-red-600 transition-colors w-full py-2"
                   >
                     <SafeIcon icon={FiLogOut} className="w-5 h-5" />

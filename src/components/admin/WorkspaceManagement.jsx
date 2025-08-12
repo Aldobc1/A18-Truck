@@ -42,7 +42,7 @@ const WorkspaceManagement = () => {
     name: '',
     phone: '',
     role: 'checker',
-    workspace_id: ''
+    workspaceIds: []
   });
   const [inviteEmail, setInviteEmail] = useState('');
   
@@ -200,9 +200,7 @@ const WorkspaceManagement = () => {
         name: userData.name || '',
         phone: userData.phone || '',
         role: userData.role || 'checker',
-        workspace_id: userData.workspaceIds && userData.workspaceIds.length > 0 
-          ? userData.workspaceIds[0] 
-          : (workspaces.length > 0 ? workspaces[0].id : '')
+        workspaceIds: userData.workspaceIds || []
       });
     } else {
       // Modo crear
@@ -212,11 +210,28 @@ const WorkspaceManagement = () => {
         name: '',
         phone: '',
         role: 'checker',
-        workspace_id: workspaces.length > 0 ? workspaces[0].id : ''
+        workspaceIds: workspaces.length > 0 ? [workspaces[0].id] : []
       });
     }
     
     setShowUserForm(true);
+  };
+
+  // Función para manejar cambios en los checkboxes de workspaces
+  const handleWorkspaceCheckboxChange = (workspaceId, checked) => {
+    if (checked) {
+      // Añadir el workspace si no está ya en la lista
+      setUserFormData(prev => ({
+        ...prev,
+        workspaceIds: [...prev.workspaceIds, workspaceId]
+      }));
+    } else {
+      // Eliminar el workspace de la lista
+      setUserFormData(prev => ({
+        ...prev,
+        workspaceIds: prev.workspaceIds.filter(id => id !== workspaceId)
+      }));
+    }
   };
 
   // Función para manejar el formulario de usuario
@@ -233,6 +248,10 @@ const WorkspaceManagement = () => {
       
       if (!userFormData.role) {
         throw new Error('El rol es obligatorio');
+      }
+
+      if (userFormData.workspaceIds.length === 0) {
+        throw new Error('Debe seleccionar al menos un workspace');
       }
       
       if (userFormMode === 'create') {
@@ -262,25 +281,26 @@ const WorkspaceManagement = () => {
           
         if (profileError) throw profileError;
         
-        // Asociar al workspace seleccionado
-        if (userFormData.workspace_id) {
-          const { error: workspaceError } = await supabase
-            .from('user_workspaces_a18')
-            .insert([
-              {
-                user_id: authData.user.id,
-                workspace_id: userFormData.workspace_id
-              }
-            ]);
-            
-          if (workspaceError) throw workspaceError;
-        }
+        // Asociar a los workspaces seleccionados
+        const workspaceRelations = userFormData.workspaceIds.map(workspaceId => ({
+          user_id: authData.user.id,
+          workspace_id: workspaceId
+        }));
+        
+        const { error: workspaceError } = await supabase
+          .from('user_workspaces_a18')
+          .insert(workspaceRelations);
+          
+        if (workspaceError) throw workspaceError;
         
         // Guardar contraseña temporal para mostrarla
         setTempPassword(password);
         setFormSuccess(`Usuario creado exitosamente. Contraseña temporal: ${password}`);
       } else {
         // Actualizar usuario existente
+        console.log('Actualizando usuario:', userFormData);
+        
+        // Actualizar datos básicos del usuario
         const { error: updateError } = await supabase
           .from('users_a18')
           .update({ 
@@ -290,29 +310,65 @@ const WorkspaceManagement = () => {
           })
           .eq('id', userFormData.id);
           
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Error al actualizar usuario:', updateError);
+          throw updateError;
+        }
         
-        // Actualizar relación con workspace si es necesario
-        if (userFormData.workspace_id) {
-          // Primero eliminamos las relaciones existentes
-          const { error: deleteError } = await supabase
-            .from('user_workspaces_a18')
-            .delete()
-            .eq('user_id', userFormData.id);
-            
-          if (deleteError) throw deleteError;
+        // Actualizar relaciones con workspaces
+        // 1. Obtener las relaciones actuales del usuario
+        const { data: currentRelations, error: fetchError } = await supabase
+          .from('user_workspaces_a18')
+          .select('*')
+          .eq('user_id', userFormData.id);
           
-          // Luego creamos la nueva relación
+        if (fetchError) {
+          console.error('Error al obtener relaciones actuales:', fetchError);
+          throw fetchError;
+        }
+        
+        console.log('Relaciones actuales:', currentRelations);
+        console.log('Nuevas relaciones (IDs):', userFormData.workspaceIds);
+        
+        // 2. Identificar relaciones a eliminar y a crear
+        const currentWorkspaceIds = currentRelations.map(rel => rel.workspace_id);
+        const workspacesToRemove = currentWorkspaceIds.filter(id => !userFormData.workspaceIds.includes(id));
+        const workspacesToAdd = userFormData.workspaceIds.filter(id => !currentWorkspaceIds.includes(id));
+        
+        console.log('Workspaces a eliminar:', workspacesToRemove);
+        console.log('Workspaces a añadir:', workspacesToAdd);
+        
+        // 3. Eliminar relaciones que ya no se necesitan
+        if (workspacesToRemove.length > 0) {
+          for (const workspaceId of workspacesToRemove) {
+            const { error: deleteError } = await supabase
+              .from('user_workspaces_a18')
+              .delete()
+              .eq('user_id', userFormData.id)
+              .eq('workspace_id', workspaceId);
+              
+            if (deleteError) {
+              console.error('Error al eliminar relación con workspace:', deleteError);
+              throw deleteError;
+            }
+          }
+        }
+        
+        // 4. Crear nuevas relaciones
+        if (workspacesToAdd.length > 0) {
+          const newRelations = workspacesToAdd.map(workspaceId => ({
+            user_id: userFormData.id,
+            workspace_id: workspaceId
+          }));
+          
           const { error: insertError } = await supabase
             .from('user_workspaces_a18')
-            .insert([
-              {
-                user_id: userFormData.id,
-                workspace_id: userFormData.workspace_id
-              }
-            ]);
+            .insert(newRelations);
             
-          if (insertError) throw insertError;
+          if (insertError) {
+            console.error('Error al insertar nuevas relaciones:', insertError);
+            throw insertError;
+          }
         }
         
         setFormSuccess('Usuario actualizado exitosamente');
@@ -323,7 +379,7 @@ const WorkspaceManagement = () => {
         setTimeout(() => {
           setShowUserForm(false);
           setFormSuccess('');
-          fetchUsers();
+          fetchUsers(); // Actualizar la lista de usuarios
         }, 2000);
       }
     } catch (err) {
@@ -751,7 +807,7 @@ const WorkspaceManagement = () => {
                       </div>
                       
                       <div className="text-xs text-gray-600 border-t border-gray-100 pt-1">
-                        <span className="font-medium">Workspace:</span> {user.workspaceNames && user.workspaceNames.length > 0 
+                        <span className="font-medium">Workspaces:</span> {user.workspaceNames && user.workspaceNames.length > 0 
                           ? user.workspaceNames.join(', ') 
                           : 'Sin workspace'}
                       </div>
@@ -928,7 +984,7 @@ const WorkspaceManagement = () => {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-xl shadow-xl p-4 w-full max-w-sm mx-auto"
+            className="bg-white rounded-xl shadow-xl p-4 w-full max-w-sm mx-auto max-h-[90vh] overflow-y-auto"
           >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold text-gray-900">
@@ -1000,21 +1056,37 @@ const WorkspaceManagement = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Workspace
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Workspaces
                 </label>
-                <select
-                  value={userFormData.workspace_id}
-                  onChange={(e) => setUserFormData({ ...userFormData, workspace_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                >
-                  <option value="">Sin workspace asignado</option>
-                  {workspaces.map(workspace => (
-                    <option key={workspace.id} value={workspace.id}>
-                      {workspace.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto">
+                  {workspaces.length > 0 ? (
+                    <div className="space-y-2">
+                      {workspaces.map(workspace => (
+                        <div key={workspace.id} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id={`workspace-${workspace.id}`}
+                            checked={userFormData.workspaceIds.includes(workspace.id)}
+                            onChange={(e) => handleWorkspaceCheckboxChange(workspace.id, e.target.checked)}
+                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <label
+                            htmlFor={`workspace-${workspace.id}`}
+                            className="ml-2 block text-sm text-gray-900"
+                          >
+                            {workspace.name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">No hay workspaces disponibles</p>
+                  )}
+                </div>
+                {userFormData.workspaceIds.length === 0 && (
+                  <p className="text-xs text-red-500 mt-1">Selecciona al menos un workspace</p>
+                )}
               </div>
               
               {userFormMode === 'create' && (
@@ -1039,7 +1111,7 @@ const WorkspaceManagement = () => {
                 <button
                   type="submit"
                   className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center text-sm"
-                  disabled={processing}
+                  disabled={processing || userFormData.workspaceIds.length === 0}
                 >
                   {processing ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
