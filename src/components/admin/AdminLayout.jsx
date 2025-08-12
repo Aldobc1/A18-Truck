@@ -5,7 +5,10 @@ import { useAuth } from '../../context/AuthContext';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 
-const { FiTruck, FiSettings, FiMapPin, FiFileText, FiLogOut, FiHome, FiFolder, FiMenu, FiX, FiBriefcase } = FiIcons;
+const { 
+  FiTruck, FiSettings, FiMapPin, FiFileText, FiLogOut, 
+  FiHome, FiFolder, FiMenu, FiX, FiBriefcase, FiUser
+} = FiIcons;
 
 const AdminLayout = ({ children }) => {
   const { user, logout } = useAuth();
@@ -28,46 +31,46 @@ const AdminLayout = ({ children }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile Header */}
-      <div className="lg:hidden bg-white shadow-sm border-b border-gray-200 px-4 py-3">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-20 bg-white shadow-sm border-b border-gray-200 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <SafeIcon icon={FiTruck} className="w-8 h-8 text-blue-600" />
+            <SafeIcon icon={FiTruck} className="w-6 h-6 text-blue-600" />
             <div>
-              <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
+              <h1 className="text-base font-bold text-gray-900">Admin Panel</h1>
               <p className="text-xs text-gray-600 truncate max-w-32">{user.email}</p>
             </div>
           </div>
-          <button
-            onClick={() => setSidebarOpen(true)}
+          <button 
+            onClick={() => setSidebarOpen(true)} 
             className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
           >
-            <SafeIcon icon={FiMenu} className="w-6 h-6" />
+            <SafeIcon icon={FiMenu} className="w-5 h-5" />
           </button>
         </div>
       </div>
 
       <div className="flex">
         {/* Desktop Sidebar */}
-        <div className="hidden lg:block w-64 bg-white shadow-lg">
-          <div className="p-6 border-b border-gray-200">
+        <div className="hidden lg:block w-64 bg-white shadow-lg h-screen fixed">
+          <div className="p-5 border-b border-gray-200">
             <div className="flex items-center space-x-3">
-              <SafeIcon icon={FiTruck} className="w-8 h-8 text-blue-600" />
+              <SafeIcon icon={FiTruck} className="w-7 h-7 text-blue-600" />
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
+                <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
                 <p className="text-sm text-gray-600 truncate">{user.email}</p>
               </div>
             </div>
           </div>
-          <nav className="mt-6">
+          <nav className="mt-5">
             {navigation.map((item) => {
               const isActive = location.pathname === item.href;
               return (
-                <Link
-                  key={item.name}
+                <Link 
+                  key={item.name} 
                   to={item.href}
-                  className={`flex items-center px-6 py-3 text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
+                  className={`flex items-center px-5 py-3 text-sm font-medium transition-colors ${
+                    isActive 
+                      ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600' 
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -77,10 +80,22 @@ const AdminLayout = ({ children }) => {
               );
             })}
           </nav>
-          <div className="absolute bottom-0 w-64 p-6 border-t border-gray-200">
-            <button
-              onClick={logout}
-              className="flex items-center space-x-3 text-gray-600 hover:text-red-600 transition-colors"
+          <div className="absolute bottom-0 w-64 p-5 border-t border-gray-200">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="bg-gray-100 p-2 rounded-full">
+                <SafeIcon icon={FiUser} className="w-5 h-5 text-gray-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {user.name || user.email.split('@')[0]}
+                </p>
+                <p className="text-xs text-gray-500 truncate">{user.role === 'admin' ? 'Administrador' : 'Usuario'}</p>
+              </div>
+            </div>
+            
+            <button 
+              onClick={logout} 
+              className="flex items-center space-x-2 text-gray-600 hover:text-red-600 transition-colors w-full"
             >
               <SafeIcon icon={FiLogOut} className="w-5 h-5" />
               <span>Cerrar Sesión</span>
@@ -110,36 +125,53 @@ const AdminLayout = ({ children }) => {
                 className="lg:hidden fixed inset-y-0 left-0 w-64 bg-white shadow-xl z-50 flex flex-col"
               >
                 {/* Header */}
-                <div className="p-6 border-b border-gray-200">
+                <div className="p-4 border-b border-gray-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <SafeIcon icon={FiTruck} className="w-8 h-8 text-blue-600" />
+                      <SafeIcon icon={FiTruck} className="w-6 h-6 text-blue-600" />
                       <div>
-                        <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
-                        <p className="text-sm text-gray-600 truncate">{user.email}</p>
+                        <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
+                        <p className="text-xs text-gray-600 truncate">{user.email}</p>
                       </div>
                     </div>
-                    <button
-                      onClick={closeSidebar}
+                    <button 
+                      onClick={closeSidebar} 
                       className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
                     >
-                      <SafeIcon icon={FiX} className="w-6 h-6" />
+                      <SafeIcon icon={FiX} className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
 
+                {/* User Profile */}
+                <div className="p-4 border-b border-gray-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="bg-gray-100 p-2 rounded-full">
+                      <SafeIcon icon={FiUser} className="w-5 h-5 text-gray-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        {user.name || user.email.split('@')[0]}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {user.role === 'admin' ? 'Administrador' : 'Usuario'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Navigation */}
-                <nav className="flex-1 mt-6">
+                <nav className="flex-1 overflow-y-auto pt-2">
                   {navigation.map((item) => {
                     const isActive = location.pathname === item.href;
                     return (
-                      <Link
-                        key={item.name}
+                      <Link 
+                        key={item.name} 
                         to={item.href}
                         onClick={closeSidebar}
-                        className={`flex items-center px-6 py-4 text-sm font-medium transition-colors ${
-                          isActive
-                            ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
+                        className={`flex items-center px-4 py-3 text-sm font-medium transition-colors ${
+                          isActive 
+                            ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600' 
                             : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                         }`}
                       >
@@ -151,10 +183,10 @@ const AdminLayout = ({ children }) => {
                 </nav>
 
                 {/* Logout Button */}
-                <div className="p-6 border-t border-gray-200">
-                  <button
-                    onClick={logout}
-                    className="flex items-center space-x-3 text-gray-600 hover:text-red-600 transition-colors"
+                <div className="p-4 border-t border-gray-200 mt-auto">
+                  <button 
+                    onClick={logout} 
+                    className="flex items-center space-x-2 text-gray-600 hover:text-red-600 transition-colors w-full py-2"
                   >
                     <SafeIcon icon={FiLogOut} className="w-5 h-5" />
                     <span>Cerrar Sesión</span>
@@ -166,8 +198,10 @@ const AdminLayout = ({ children }) => {
         </AnimatePresence>
 
         {/* Main Content */}
-        <div className="flex-1 min-w-0">
-          <main className="p-4 lg:p-8">{children}</main>
+        <div className="flex-1 min-w-0 lg:ml-64">
+          <main className="p-4 pt-16 lg:pt-4 lg:p-6 max-w-6xl mx-auto">
+            {children}
+          </main>
         </div>
       </div>
     </div>

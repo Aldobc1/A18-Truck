@@ -413,37 +413,37 @@ const WorkspaceManagement = () => {
   return (
     <div className="space-y-6">
       {/* Encabezado y Pestañas */}
-      <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+      <div className="flex flex-col space-y-4">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Gestión de Workspaces</h1>
-          <p className="text-gray-600 text-sm lg:text-base">
+          <h1 className="text-xl font-bold text-gray-900">Gestión de Workspaces</h1>
+          <p className="text-gray-600 text-sm">
             Administra tus workspaces y usuarios
           </p>
         </div>
         
-        <div className="flex space-x-2">
+        <div className="flex w-full rounded-lg bg-gray-100 p-1">
           <button
             onClick={() => setActiveTab('workspaces')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`flex-1 py-2 px-3 rounded-md font-medium transition-colors flex items-center justify-center ${
               activeTab === 'workspaces'
                 ? 'bg-purple-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                : 'bg-transparent text-gray-700 hover:bg-gray-200'
             }`}
           >
-            <SafeIcon icon={FiBriefcase} className="w-4 h-4 lg:w-5 lg:h-5 mr-2 inline-block" />
-            Workspaces
+            <SafeIcon icon={FiBriefcase} className="w-4 h-4 mr-2" />
+            <span>Workspaces</span>
           </button>
           
           <button
             onClick={() => setActiveTab('users')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`flex-1 py-2 px-3 rounded-md font-medium transition-colors flex items-center justify-center ${
               activeTab === 'users'
                 ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                : 'bg-transparent text-gray-700 hover:bg-gray-200'
             }`}
           >
-            <SafeIcon icon={FiUsers} className="w-4 h-4 lg:w-5 lg:h-5 mr-2 inline-block" />
-            Usuarios
+            <SafeIcon icon={FiUsers} className="w-4 h-4 mr-2" />
+            <span>Usuarios</span>
           </button>
         </div>
       </div>
@@ -452,8 +452,8 @@ const WorkspaceManagement = () => {
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           <div className="flex items-center">
-            <SafeIcon icon={FiAlertCircle} className="w-5 h-5 mr-2" />
-            <p>{error}</p>
+            <SafeIcon icon={FiAlertCircle} className="w-5 h-5 mr-2 flex-shrink-0" />
+            <p className="text-sm">{error}</p>
           </div>
         </div>
       )}
@@ -461,8 +461,8 @@ const WorkspaceManagement = () => {
       {formError && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           <div className="flex items-center">
-            <SafeIcon icon={FiAlertCircle} className="w-5 h-5 mr-2" />
-            <p>{formError}</p>
+            <SafeIcon icon={FiAlertCircle} className="w-5 h-5 mr-2 flex-shrink-0" />
+            <p className="text-sm">{formError}</p>
           </div>
         </div>
       )}
@@ -470,39 +470,39 @@ const WorkspaceManagement = () => {
       {formSuccess && (
         <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
           <div className="flex items-center">
-            <SafeIcon icon={FiCheck} className="w-5 h-5 mr-2" />
-            <p>{formSuccess}</p>
+            <SafeIcon icon={FiCheck} className="w-5 h-5 mr-2 flex-shrink-0" />
+            <p className="text-sm">{formSuccess}</p>
           </div>
         </div>
       )}
 
       {/* Vista de Workspaces */}
       {activeTab === 'workspaces' && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Current Workspace */}
           {currentWorkspace && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+              <div className="flex flex-col space-y-3">
                 <div className="flex items-center space-x-3">
-                  <div className="bg-purple-100 p-3 rounded-lg">
-                    <SafeIcon icon={FiBriefcase} className="w-6 h-6 text-purple-600" />
+                  <div className="bg-purple-100 p-2.5 rounded-lg">
+                    <SafeIcon icon={FiBriefcase} className="w-5 h-5 text-purple-600" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-900">
+                    <h2 className="text-base font-semibold text-gray-900">
                       {currentWorkspace.name}
                     </h2>
-                    <p className="text-gray-500 text-sm">{currentWorkspace.description || 'Sin descripción'}</p>
+                    <p className="text-xs text-gray-500">{currentWorkspace.description || 'Sin descripción'}</p>
                   </div>
                 </div>
                 
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => setShowInviteForm(true)}
-                  className="bg-blue-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-1 text-sm"
+                  className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 text-sm"
                 >
                   <SafeIcon icon={FiUserPlus} className="w-4 h-4" />
-                  <span>Invitar</span>
+                  <span>Invitar Usuario</span>
                 </motion.button>
               </div>
             </div>
@@ -514,39 +514,39 @@ const WorkspaceManagement = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowCreateForm(true)}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center space-x-2 text-sm lg:text-base"
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center space-x-2 text-sm"
             >
-              <SafeIcon icon={FiPlus} className="w-4 h-4 lg:w-5 lg:h-5" />
+              <SafeIcon icon={FiPlus} className="w-4 h-4" />
               <span>Crear Workspace</span>
             </motion.button>
           </div>
 
           {/* Workspace List */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Mis Workspaces</h2>
+            <div className="p-3 border-b border-gray-200">
+              <h2 className="text-base font-semibold text-gray-900">Mis Workspaces</h2>
             </div>
             
-            <div className="p-4">
+            <div className="p-3">
               {workspaces.length === 0 ? (
-                <div className="text-center py-8">
-                  <SafeIcon icon={FiUsers} className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">No tienes workspaces aún</p>
+                <div className="text-center py-6">
+                  <SafeIcon icon={FiUsers} className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm">No tienes workspaces aún</p>
                   <button
                     onClick={() => setShowCreateForm(true)}
-                    className="mt-4 bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                    className="mt-3 bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors text-sm"
                   >
                     Crear tu primer workspace
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-3">
                   {workspaces.map((workspace) => (
                     <motion.div
                       key={workspace.id}
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                      className={`border rounded-lg p-3 cursor-pointer transition-colors ${
                         currentWorkspace && currentWorkspace.id === workspace.id
                           ? 'border-purple-500 bg-purple-50'
                           : 'border-gray-200 hover:bg-gray-50'
@@ -563,7 +563,7 @@ const WorkspaceManagement = () => {
                         >
                           <SafeIcon
                             icon={FiBriefcase}
-                            className={`w-5 h-5 ${
+                            className={`w-4 h-4 ${
                               currentWorkspace && currentWorkspace.id === workspace.id
                                 ? 'text-purple-600'
                                 : 'text-gray-600'
@@ -572,7 +572,7 @@ const WorkspaceManagement = () => {
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 truncate">
+                          <p className="font-medium text-gray-900 truncate text-sm">
                             {workspace.name}
                           </p>
                           <p className="text-xs text-gray-500 truncate">
@@ -582,7 +582,7 @@ const WorkspaceManagement = () => {
                         
                         {currentWorkspace && currentWorkspace.id === workspace.id && (
                           <div className="flex-shrink-0">
-                            <SafeIcon icon={FiCheck} className="w-5 h-5 text-purple-600" />
+                            <SafeIcon icon={FiCheck} className="w-4 h-4 text-purple-600" />
                           </div>
                         )}
                       </div>
@@ -597,13 +597,13 @@ const WorkspaceManagement = () => {
 
       {/* Vista de Usuarios */}
       {activeTab === 'users' && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Filtros y Acciones */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3">
+            <div className="flex justify-between items-center mb-3">
               <div className="flex items-center space-x-2">
-                <SafeIcon icon={FiFilter} className="w-5 h-5 text-gray-400" />
-                <h3 className="font-medium text-gray-700">Filtros</h3>
+                <SafeIcon icon={FiFilter} className="w-4 h-4 text-gray-400" />
+                <h3 className="font-medium text-gray-700 text-sm">Filtros</h3>
               </div>
               
               <div className="flex space-x-2">
@@ -611,25 +611,25 @@ const WorkspaceManagement = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={fetchUsers}
-                  className="bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg font-medium hover:bg-gray-300 transition-colors flex items-center space-x-1 text-sm"
+                  className="bg-gray-200 text-gray-700 p-2 rounded-lg hover:bg-gray-300 transition-colors flex items-center justify-center"
+                  aria-label="Refrescar"
                 >
                   <SafeIcon icon={FiRefreshCw} className="w-4 h-4" />
-                  <span>Actualizar</span>
                 </motion.button>
                 
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => openUserForm('create')}
-                  className="bg-blue-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-1 text-sm"
+                  className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                  aria-label="Añadir usuario"
                 >
                   <SafeIcon icon={FiUserPlus} className="w-4 h-4" />
-                  <span>Agregar Usuario</span>
                 </motion.button>
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <div className="space-y-3">
               <div className="relative">
                 <SafeIcon
                   icon={FiSearch}
@@ -640,136 +640,137 @@ const WorkspaceManagement = () => {
                   placeholder="Buscar por email o nombre..."
                   value={userFilter}
                   onChange={(e) => setUserFilter(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                 />
               </div>
               
-              <div>
-                <select
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="all">Todos los roles</option>
-                  <option value="admin">Administradores</option>
-                  <option value="checker">Checadores</option>
-                </select>
-              </div>
-              
-              <div>
-                <select
-                  value={workspaceFilter}
-                  onChange={(e) => setWorkspaceFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="all">Todos los workspaces</option>
-                  {workspaces.map(workspace => (
-                    <option key={workspace.id} value={workspace.id}>
-                      {workspace.name}
-                    </option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  >
+                    <option value="all">Todos los roles</option>
+                    <option value="admin">Administradores</option>
+                    <option value="checker">Checadores</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <select
+                    value={workspaceFilter}
+                    onChange={(e) => setWorkspaceFilter(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  >
+                    <option value="all">Todos los workspaces</option>
+                    {workspaces.map(workspace => (
+                      <option key={workspace.id} value={workspace.id}>
+                        {workspace.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Lista de Usuarios */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Usuarios ({filteredUsers.length})
-              </h2>
+            <div className="p-3 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-semibold text-gray-900">
+                  Usuarios
+                </h2>
+                <span className="bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded">
+                  {filteredUsers.length}
+                </span>
+              </div>
             </div>
             
-            <div className="p-4">
+            <div className="p-3">
               {loadingUsers ? (
-                <div className="flex justify-center py-8">
-                  <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <div className="flex justify-center py-6">
+                  <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                 </div>
               ) : filteredUsers.length === 0 ? (
-                <div className="text-center py-8">
-                  <SafeIcon icon={FiUsers} className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">No se encontraron usuarios</p>
+                <div className="text-center py-6">
+                  <SafeIcon icon={FiUsers} className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm">No se encontraron usuarios</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Usuario
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Contacto
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Rol
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Workspaces
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Acciones
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredUsers.map((user) => (
-                        <tr key={user.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <SafeIcon icon={FiUser} className="w-4 h-4 text-gray-400 mr-2" />
-                              <div>
-                                <span className="text-sm font-medium text-gray-900">{user.name || 'Sin nombre'}</span>
-                                <div className="flex items-center space-x-1 text-xs text-gray-500">
-                                  <SafeIcon icon={FiMail} className="w-3 h-3" />
-                                  <span>{user.email}</span>
-                                </div>
-                              </div>
+                <div className="space-y-3">
+                  {filteredUsers.map((user) => (
+                    <div key={user.id} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <div className="bg-blue-100 p-1.5 rounded-full">
+                            <SafeIcon icon={FiUser} className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium text-gray-900">{user.name || 'Sin nombre'}</span>
+                            <div className="flex items-center space-x-1 text-xs text-gray-500">
+                              <SafeIcon icon={FiMail} className="w-3 h-3" />
+                              <span className="truncate max-w-[150px]">{user.email}</span>
                             </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <SafeIcon icon={FiPhone} className="w-4 h-4 text-gray-400 mr-2" />
-                              <span className="text-sm text-gray-900">{user.phone || 'No registrado'}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              user.role === 'admin' 
-                                ? 'bg-purple-100 text-purple-800' 
-                                : 'bg-blue-100 text-blue-800'
-                            }`}>
-                              {user.role === 'admin' ? 'Administrador' : 'Checador'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
-                              {user.workspaceNames && user.workspaceNames.length > 0 
-                                ? user.workspaceNames.join(', ') 
-                                : 'Sin workspace'}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button
-                              onClick={() => openUserForm('edit', user)}
-                              className="text-blue-600 hover:text-blue-900 mr-3"
-                            >
-                              <SafeIcon icon={FiEdit2} className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteUser(user.id)}
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              <SafeIcon icon={FiTrash2} className="w-4 h-4" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-1">
+                          <button
+                            onClick={() => openUserForm('edit', user)}
+                            className="text-blue-600 hover:text-blue-900 p-1"
+                            aria-label="Editar"
+                          >
+                            <SafeIcon icon={FiEdit2} className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(user.id)}
+                            className="text-red-600 hover:text-red-900 p-1"
+                            aria-label="Eliminar"
+                          >
+                            <SafeIcon icon={FiTrash2} className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2 text-xs mb-2">
+                        <div className="flex items-start">
+                          <SafeIcon icon={FiPhone} className="w-3 h-3 text-gray-400 mr-1 mt-0.5" />
+                          <span className="text-gray-600 truncate">{user.phone || 'No registrado'}</span>
+                        </div>
+                        <div>
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                            user.role === 'admin' 
+                              ? 'bg-purple-100 text-purple-800' 
+                              : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {user.role === 'admin' ? 'Administrador' : 'Checador'}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="text-xs text-gray-600 border-t border-gray-100 pt-1">
+                        <span className="font-medium">Workspace:</span> {user.workspaceNames && user.workspaceNames.length > 0 
+                          ? user.workspaceNames.join(', ') 
+                          : 'Sin workspace'}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
+              
+              {/* Botón flotante para añadir usuario en móvil */}
+              <div className="fixed bottom-6 right-6 md:hidden">
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => openUserForm('create')}
+                  className="w-12 h-12 bg-blue-600 rounded-full shadow-lg flex items-center justify-center"
+                >
+                  <SafeIcon icon={FiUserPlus} className="w-6 h-6 text-white" />
+                </motion.button>
+              </div>
             </div>
           </div>
         </div>
@@ -781,15 +782,15 @@ const WorkspaceManagement = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md"
+            className="bg-white rounded-xl shadow-xl p-4 w-full max-w-sm mx-auto"
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Crear Workspace</h2>
+              <h2 className="text-lg font-bold text-gray-900">Crear Workspace</h2>
               <button
                 onClick={() => setShowCreateForm(false)}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -807,7 +808,7 @@ const WorkspaceManagement = () => {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
                   placeholder="Ej: Mi Empresa"
                   required
                 />
@@ -820,7 +821,7 @@ const WorkspaceManagement = () => {
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
                   placeholder="Descripción breve del workspace"
                   rows="3"
                 />
@@ -830,7 +831,7 @@ const WorkspaceManagement = () => {
                 <button
                   type="button"
                   onClick={() => setShowCreateForm(false)}
-                  className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm"
                   disabled={processing}
                 >
                   Cancelar
@@ -838,7 +839,7 @@ const WorkspaceManagement = () => {
                 
                 <button
                   type="submit"
-                  className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center"
+                  className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center text-sm"
                   disabled={processing}
                 >
                   {processing ? (
@@ -858,15 +859,15 @@ const WorkspaceManagement = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md"
+            className="bg-white rounded-xl shadow-xl p-4 w-full max-w-sm mx-auto"
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Invitar Usuario</h2>
+              <h2 className="text-lg font-bold text-gray-900">Invitar Usuario</h2>
               <button
                 onClick={() => setShowInviteForm(false)}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -884,7 +885,7 @@ const WorkspaceManagement = () => {
                   type="email"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   placeholder="usuario@ejemplo.com"
                   required
                 />
@@ -894,7 +895,7 @@ const WorkspaceManagement = () => {
                 <button
                   type="button"
                   onClick={() => setShowInviteForm(false)}
-                  className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm"
                   disabled={processing}
                 >
                   Cancelar
@@ -902,7 +903,7 @@ const WorkspaceManagement = () => {
                 
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center text-sm"
                   disabled={processing}
                 >
                   {processing ? (
@@ -922,15 +923,15 @@ const WorkspaceManagement = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md"
+            className="bg-white rounded-xl shadow-xl p-4 w-full max-w-sm mx-auto"
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 className="text-lg font-bold text-gray-900">
                 {userFormMode === 'create' ? 'Agregar Usuario' : 'Editar Usuario'}
               </h2>
               <button
@@ -950,7 +951,7 @@ const WorkspaceManagement = () => {
                   type="email"
                   value={userFormData.email}
                   onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   placeholder="usuario@ejemplo.com"
                   required
                   disabled={userFormMode === 'edit'} // No permitir cambiar email en modo edición
@@ -965,7 +966,7 @@ const WorkspaceManagement = () => {
                   type="text"
                   value={userFormData.name}
                   onChange={(e) => setUserFormData({ ...userFormData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   placeholder="Nombre completo"
                 />
               </div>
@@ -978,7 +979,7 @@ const WorkspaceManagement = () => {
                   type="text"
                   value={userFormData.phone}
                   onChange={(e) => setUserFormData({ ...userFormData, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   placeholder="Número de teléfono"
                 />
               </div>
@@ -990,7 +991,7 @@ const WorkspaceManagement = () => {
                 <select
                   value={userFormData.role}
                   onChange={(e) => setUserFormData({ ...userFormData, role: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   required
                 >
                   <option value="checker">Checador</option>
@@ -1005,7 +1006,7 @@ const WorkspaceManagement = () => {
                 <select
                   value={userFormData.workspace_id}
                   onChange={(e) => setUserFormData({ ...userFormData, workspace_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 >
                   <option value="">Sin workspace asignado</option>
                   {workspaces.map(workspace => (
@@ -1017,7 +1018,7 @@ const WorkspaceManagement = () => {
               </div>
               
               {userFormMode === 'create' && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-700">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-xs text-yellow-700">
                   <p className="flex items-center">
                     <SafeIcon icon={FiAlertCircle} className="w-4 h-4 mr-2 flex-shrink-0" />
                     Se generará una contraseña temporal que deberás compartir con el usuario.
@@ -1029,7 +1030,7 @@ const WorkspaceManagement = () => {
                 <button
                   type="button"
                   onClick={() => setShowUserForm(false)}
-                  className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm"
                   disabled={processing}
                 >
                   Cancelar
@@ -1037,7 +1038,7 @@ const WorkspaceManagement = () => {
                 
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center text-sm"
                   disabled={processing}
                 >
                   {processing ? (
@@ -1057,15 +1058,15 @@ const WorkspaceManagement = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md"
+            className="bg-white rounded-xl shadow-xl p-4 w-full max-w-sm mx-auto"
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 className="text-lg font-bold text-gray-900">
                 ¡Usuario Creado Exitosamente!
               </h2>
               <button
@@ -1078,22 +1079,22 @@ const WorkspaceManagement = () => {
             
             <div className="space-y-4">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">Credenciales de acceso</h3>
-                <div className="space-y-2">
+                <h3 className="font-semibold text-gray-900 mb-2 text-sm">Credenciales de acceso</h3>
+                <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Email:</span>
                     <span className="font-medium">{userFormData.email}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Contraseña temporal:</span>
-                    <span className="font-medium font-mono bg-gray-100 px-2 py-1 rounded">{tempPassword}</span>
+                    <span className="font-medium font-mono bg-gray-100 px-2 py-1 rounded text-xs break-all">{tempPassword}</span>
                   </div>
                 </div>
               </div>
               
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-xs">
                 <div className="flex items-start space-x-2">
-                  <SafeIcon icon={FiAlertCircle} className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                  <SafeIcon icon={FiAlertCircle} className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-yellow-800 font-medium mb-1">Importante:</p>
                     <ul className="text-yellow-700 space-y-1">
@@ -1107,7 +1108,7 @@ const WorkspaceManagement = () => {
               
               <button
                 onClick={closeTempPasswordModal}
-                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
               >
                 Entendido
               </button>
