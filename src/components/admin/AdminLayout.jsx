@@ -1,0 +1,178 @@
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
+import * as FiIcons from 'react-icons/fi';
+import SafeIcon from '../../common/SafeIcon';
+
+const { FiTruck, FiSettings, FiMapPin, FiFileText, FiLogOut, FiHome, FiFolder, FiMenu, FiX } = FiIcons;
+
+const AdminLayout = ({ children }) => {
+  const { user, logout } = useAuth();
+  const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const navigation = [
+    { name: 'Dashboard', href: '/admin', icon: FiHome },
+    { name: 'Camiones', href: '/admin/trucks', icon: FiTruck },
+    { name: 'Proyectos', href: '/admin/projects', icon: FiFolder },
+    { name: 'Puntos', href: '/admin/points', icon: FiMapPin },
+    { name: 'Registros', href: '/admin/records', icon: FiFileText },
+  ];
+
+  const closeSidebar = () => {
+    setSidebarOpen(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile Header */}
+      <div className="lg:hidden bg-white shadow-sm border-b border-gray-200 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <SafeIcon icon={FiTruck} className="w-8 h-8 text-blue-600" />
+            <div>
+              <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
+              <p className="text-xs text-gray-600 truncate max-w-32">{user.email}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+          >
+            <SafeIcon icon={FiMenu} className="w-6 h-6" />
+          </button>
+        </div>
+      </div>
+
+      <div className="flex">
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block w-64 bg-white shadow-lg">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center space-x-3">
+              <SafeIcon icon={FiTruck} className="w-8 h-8 text-blue-600" />
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
+                <p className="text-sm text-gray-600 truncate">{user.email}</p>
+              </div>
+            </div>
+          </div>
+          <nav className="mt-6">
+            {navigation.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`flex items-center px-6 py-3 text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <SafeIcon icon={item.icon} className="w-5 h-5 mr-3" />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </nav>
+          <div className="absolute bottom-0 w-64 p-6 border-t border-gray-200">
+            <button
+              onClick={logout}
+              className="flex items-center space-x-3 text-gray-600 hover:text-red-600 transition-colors"
+            >
+              <SafeIcon icon={FiLogOut} className="w-5 h-5" />
+              <span>Cerrar Sesión</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Sidebar Overlay */}
+        <AnimatePresence>
+          {sidebarOpen && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+                onClick={closeSidebar}
+              />
+
+              {/* Sidebar */}
+              <motion.div
+                initial={{ x: -280 }}
+                animate={{ x: 0 }}
+                exit={{ x: -280 }}
+                transition={{ type: 'tween', duration: 0.3 }}
+                className="lg:hidden fixed inset-y-0 left-0 w-64 bg-white shadow-xl z-50 flex flex-col"
+              >
+                {/* Header */}
+                <div className="p-6 border-b border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <SafeIcon icon={FiTruck} className="w-8 h-8 text-blue-600" />
+                      <div>
+                        <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
+                        <p className="text-sm text-gray-600 truncate">{user.email}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={closeSidebar}
+                      className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+                    >
+                      <SafeIcon icon={FiX} className="w-6 h-6" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Navigation */}
+                <nav className="flex-1 mt-6">
+                  {navigation.map((item) => {
+                    const isActive = location.pathname === item.href;
+                    return (
+                      <Link
+                        key={item.name}
+                        to={item.href}
+                        onClick={closeSidebar}
+                        className={`flex items-center px-6 py-4 text-sm font-medium transition-colors ${
+                          isActive
+                            ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        }`}
+                      >
+                        <SafeIcon icon={item.icon} className="w-5 h-5 mr-3" />
+                        {item.name}
+                      </Link>
+                    );
+                  })}
+                </nav>
+
+                {/* Logout Button */}
+                <div className="p-6 border-t border-gray-200">
+                  <button
+                    onClick={logout}
+                    className="flex items-center space-x-3 text-gray-600 hover:text-red-600 transition-colors"
+                  >
+                    <SafeIcon icon={FiLogOut} className="w-5 h-5" />
+                    <span>Cerrar Sesión</span>
+                  </button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Main Content */}
+        <div className="flex-1 min-w-0">
+          <main className="p-4 lg:p-8">
+            {children}
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AdminLayout;
