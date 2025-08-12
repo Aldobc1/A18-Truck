@@ -31,27 +31,22 @@ const Register = () => {
       setError('Todos los campos son obligatorios');
       return false;
     }
-
     if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
       setError('Por favor ingresa un correo electrónico válido');
       return false;
     }
-
     if (formData.password.length < 6) {
       setError('La contraseña debe tener al menos 6 caracteres');
       return false;
     }
-
     if (formData.password !== formData.confirmPassword) {
       setError('Las contraseñas no coinciden');
       return false;
     }
-
     if (!formData.agreeTerms) {
       setError('Debes aceptar los términos y condiciones');
       return false;
     }
-
     return true;
   };
 
@@ -59,17 +54,16 @@ const Register = () => {
     e.preventDefault();
     setError('');
     setSuccessMessage('');
-
     if (!validateForm()) return;
-
+    
     setLoading(true);
     try {
       const { success, error, data } = await signUp(formData.email, formData.password);
-
+      
       if (!success) {
         throw new Error(error || 'Error al registrar usuario');
       }
-
+      
       setSuccessMessage('¡Registro exitoso! Redirigiendo al inicio de sesión...');
       setTimeout(() => {
         navigate('/login');
@@ -84,7 +78,7 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -101,7 +95,6 @@ const Register = () => {
             </Link>
           </p>
         </div>
-
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div className="mb-4">
@@ -125,7 +118,6 @@ const Register = () => {
                 />
               </div>
             </div>
-            
             <div className="mb-4">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Contraseña
@@ -147,7 +139,6 @@ const Register = () => {
                 />
               </div>
             </div>
-            
             <div className="mb-4">
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Confirmar Contraseña
@@ -170,7 +161,6 @@ const Register = () => {
               </div>
             </div>
           </div>
-
           <div className="flex items-start">
             <div className="flex items-center h-5">
               <input
@@ -188,9 +178,8 @@ const Register = () => {
               </label>
             </div>
           </div>
-
           {error && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="p-3 rounded-md bg-red-50 dark:bg-red-900 dark:bg-opacity-30 text-red-700 dark:text-red-300"
@@ -201,9 +190,8 @@ const Register = () => {
               </div>
             </motion.div>
           )}
-
           {successMessage && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="p-3 rounded-md bg-green-50 dark:bg-green-900 dark:bg-opacity-30 text-green-700 dark:text-green-300"
@@ -214,7 +202,6 @@ const Register = () => {
               </div>
             </motion.div>
           )}
-
           <div>
             <motion.button
               type="submit"

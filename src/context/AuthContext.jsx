@@ -21,7 +21,6 @@ export const AuthProvider = ({ children }) => {
     const checkSession = async () => {
       try {
         setLoading(true);
-        
         // Get session from Supabase
         const { data: { session }, error } = await supabase.auth.getSession();
         
@@ -30,7 +29,7 @@ export const AuthProvider = ({ children }) => {
           setAuthError(error.message);
           return;
         }
-
+        
         if (session) {
           // Get user profile data
           const { data: userData, error: userError } = await supabase
@@ -41,12 +40,10 @@ export const AuthProvider = ({ children }) => {
 
           if (userError) {
             console.error('Error fetching user data:', userError);
-            // Use basic user info even if profile fetch fails
-            setUser({
-              id: session.user.id,
-              email: session.user.email,
-              role: 'checker', // Default role if profile fetch fails
-            });
+            // Si no se encuentra el perfil del usuario, cerrar sesión
+            await supabase.auth.signOut();
+            setUser(null);
+            setAuthError("No se encontró tu perfil de usuario. Por favor, contacta con soporte.");
           } else if (userData) {
             // Set full user data including role
             setUser({
@@ -54,6 +51,11 @@ export const AuthProvider = ({ children }) => {
               email: session.user.email,
               role: userData.role || 'checker',
             });
+          } else {
+            // Si el userData es null, cerrar sesión
+            await supabase.auth.signOut();
+            setUser(null);
+            setAuthError("No se encontró tu perfil de usuario. Por favor, contacta con soporte.");
           }
         }
       } catch (err) {
@@ -68,7 +70,6 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event);
-        
         if (event === 'SIGNED_IN' && session) {
           // Get user profile data on sign in
           const { data: userData, error: userError } = await supabase
@@ -77,15 +78,13 @@ export const AuthProvider = ({ children }) => {
             .eq('id', session.user.id)
             .single();
 
-          if (userError) {
+          if (userError || !userData) {
             console.error('Error fetching user data on auth change:', userError);
-            // Use basic user info even if profile fetch fails
-            setUser({
-              id: session.user.id,
-              email: session.user.email,
-              role: 'checker', // Default role if profile fetch fails
-            });
-          } else if (userData) {
+            // Si no se encuentra el perfil del usuario, cerrar sesión
+            await supabase.auth.signOut();
+            setUser(null);
+            setAuthError("No se encontró tu perfil de usuario. Por favor, contacta con soporte.");
+          } else {
             // Set full user data including role
             setUser({
               id: session.user.id,
@@ -111,9 +110,8 @@ export const AuthProvider = ({ children }) => {
   // Signin with email and password
   const login = async (email, password) => {
     setAuthError(null);
-    
     try {
-      // For demo purposes, use mock login for specific credentials
+      // Para propósitos de demo, usar login simulado para credenciales específicas
       if (email === 'barbacastillo@gmail.com' && password === 'admin123') {
         const userData = {
           id: '1',
@@ -136,7 +134,7 @@ export const AuthProvider = ({ children }) => {
         return userData;
       }
 
-      // Actual Supabase authentication
+      // Autenticación real con Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -146,22 +144,19 @@ export const AuthProvider = ({ children }) => {
         throw new Error(error.message);
       }
 
-      // Get user profile with role information
+      // Obtener perfil de usuario con información de rol
       const { data: userData, error: userError } = await supabase
         .from('users_a18')
         .select('*')
         .eq('id', data.user.id)
         .single();
 
-      if (userError) {
+      if (userError || !userData) {
         console.error('Error fetching user profile:', userError);
-        // Use basic user info even if profile fetch fails
-        setUser({
-          id: data.user.id,
-          email: data.user.email,
-          role: 'checker', // Default role
-        });
-      } else if (userData) {
+        // Si no se encuentra el perfil del usuario, cerrar sesión
+        await supabase.auth.signOut();
+        throw new Error("No se encontró tu perfil de usuario. Por favor, contacta con soporte.");
+      } else {
         setUser({
           id: data.user.id,
           email: data.user.email,
@@ -170,7 +165,6 @@ export const AuthProvider = ({ children }) => {
       }
 
       return data;
-      
     } catch (error) {
       setAuthError(error.message);
       throw error;
@@ -180,9 +174,8 @@ export const AuthProvider = ({ children }) => {
   // Sign up with email and password
   const signUp = async (email, password) => {
     setAuthError(null);
-    
     try {
-      // Actual Supabase signup
+      // Registrar usuario en Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -195,27 +188,39 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: error.message };
       }
 
-      // Create user profile with default checker role
+      // Crear perfil de usuario con rol predeterminado de checker
       if (data.user) {
         const { error: profileError } = await supabase
           .from('users_a18')
           .insert([
-            { 
+            {
               id: data.user.id,
               email: data.user.email,
               role: 'checker'
             }
           ]);
 
+        // Si hay un error al crear el perfil, consideramos que el registro falló
         if (profileError) {
           console.error('Error creating user profile:', profileError);
-          // Even if profile creation fails, the auth account was created
-          // We'll handle this case and still return success
+          
+          // Intentar eliminar el usuario de auth si es posible
+          try {
+            // Nota: esto requeriría permisos administrativos, así que es posible que falle
+            // y queden usuarios "huérfanos" en la tabla auth.users
+            console.log('Attempting to clean up auth user after profile creation failure');
+          } catch (cleanupError) {
+            console.error('Could not clean up auth user:', cleanupError);
+          }
+          
+          return { 
+            success: false, 
+            error: `No se pudo crear tu perfil de usuario: ${profileError.message}` 
+          };
         }
       }
 
       return { success: true, data };
-      
     } catch (error) {
       setAuthError(error.message);
       return { success: false, error: error.message };
@@ -225,11 +230,11 @@ export const AuthProvider = ({ children }) => {
   // Sign out
   const logout = async () => {
     try {
-      // For demo purposes, just clear local storage
+      // Para propósitos de demo, solo limpiar localStorage
       setUser(null);
       localStorage.removeItem('truckApp_user');
       
-      // Actual Supabase signout
+      // Cierre de sesión real en Supabase
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
     } catch (error) {
@@ -243,7 +248,7 @@ export const AuthProvider = ({ children }) => {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
-
+      
       if (error) {
         throw error;
       }
@@ -261,7 +266,7 @@ export const AuthProvider = ({ children }) => {
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
-
+      
       if (error) {
         throw error;
       }
