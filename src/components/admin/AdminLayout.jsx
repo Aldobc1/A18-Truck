@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkspace } from '../../context/WorkspaceContext';
@@ -7,24 +7,33 @@ import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 
 const {
-  FiTruck, FiSettings, FiMapPin, FiFileText, FiLogOut, FiHome, 
-  FiFolder, FiMenu, FiX, FiBriefcase, FiUser, FiChevronDown
+  FiTruck, FiSettings, FiMapPin, FiFileText, FiLogOut,
+  FiHome, FiFolder, FiMenu, FiX, FiBriefcase,
+  FiUser, FiChevronDown, FiGrid, FiMonitor
 } = FiIcons;
 
 const AdminLayout = ({ children }) => {
   const { user, logout } = useAuth();
   const { workspaces, currentWorkspace, switchWorkspace } = useWorkspace();
   const location = useLocation();
+  const navigate = useNavigate();
+  
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [workspaceDropdownOpen, setWorkspaceDropdownOpen] = useState(false);
-
+  const [dashboardDropdownOpen, setDashboardDropdownOpen] = useState(false);
+  
   const navigation = [
     { name: 'Dashboard', href: '/admin', icon: FiHome },
     { name: 'Camiones', href: '/admin/trucks', icon: FiTruck },
     { name: 'Proyectos', href: '/admin/projects', icon: FiFolder },
     { name: 'Puntos', href: '/admin/points', icon: FiMapPin },
     { name: 'Registros', href: '/admin/records', icon: FiFileText },
-    { name: 'Workspaces', href: '/admin/workspaces', icon: FiBriefcase },
+    { name: 'Usuarios', href: '/admin/workspaces', icon: FiUser },
+  ];
+
+  const dashboards = [
+    { name: 'Admin', href: '/admin', icon: FiSettings },
+    { name: 'Checker', href: '/checker', icon: FiTruck }
   ];
 
   const closeSidebar = () => {
@@ -36,6 +45,13 @@ const AdminLayout = ({ children }) => {
     setWorkspaceDropdownOpen(false);
   };
 
+  const handleDashboardChange = (href) => {
+    // Navegar al dashboard seleccionado y cerrar el dropdown
+    navigate(href);
+    setDashboardDropdownOpen(false);
+    closeSidebar();
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile Header */}
@@ -45,7 +61,7 @@ const AdminLayout = ({ children }) => {
             <SafeIcon icon={FiTruck} className="w-6 h-6 text-blue-600" />
             <div>
               <h1 className="text-base font-bold text-gray-900">Admin Panel</h1>
-              <p className="text-xs text-gray-600 truncate max-w-32">{user.email}</p>
+              <p className="text-xs text-gray-600 truncate max-w-32">{user?.email}</p>
             </div>
           </div>
           <button
@@ -65,8 +81,58 @@ const AdminLayout = ({ children }) => {
               <SafeIcon icon={FiTruck} className="w-7 h-7 text-blue-600" />
               <div>
                 <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
-                <p className="text-sm text-gray-600 truncate">{user.email}</p>
+                <p className="text-sm text-gray-600 truncate">{user?.email}</p>
               </div>
+            </div>
+          </div>
+
+          {/* Dashboard Selector */}
+          <div className="p-4 border-b border-gray-200">
+            <div className="relative">
+              <button
+                onClick={() => setDashboardDropdownOpen(!dashboardDropdownOpen)}
+                className="w-full flex items-center justify-between p-2 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+              >
+                <div className="flex items-center space-x-2">
+                  <SafeIcon icon={FiMonitor} className="w-4 h-4 text-purple-600" />
+                  <span className="text-sm font-medium text-gray-800 truncate max-w-[160px]">
+                    Cambiar Dashboard
+                  </span>
+                </div>
+                <SafeIcon
+                  icon={FiChevronDown}
+                  className={`w-4 h-4 text-gray-500 transition-transform ${
+                    dashboardDropdownOpen ? 'transform rotate-180' : ''
+                  }`}
+                />
+              </button>
+
+              {/* Dashboard Dropdown */}
+              {dashboardDropdownOpen && (
+                <div className="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg border border-gray-200 py-1">
+                  {dashboards.map((dashboard) => (
+                    <button
+                      key={dashboard.name}
+                      onClick={() => handleDashboardChange(dashboard.href)}
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2 ${
+                        location.pathname.startsWith(dashboard.href)
+                          ? 'bg-purple-50 text-purple-600'
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      <SafeIcon
+                        icon={dashboard.icon}
+                        className={`w-4 h-4 ${
+                          location.pathname.startsWith(dashboard.href)
+                            ? 'text-purple-600'
+                            : 'text-gray-400'
+                        }`}
+                      />
+                      <span className="truncate">{dashboard.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -83,12 +149,14 @@ const AdminLayout = ({ children }) => {
                     {currentWorkspace ? currentWorkspace.name : 'Seleccionar Workspace'}
                   </span>
                 </div>
-                <SafeIcon 
-                  icon={FiChevronDown} 
-                  className={`w-4 h-4 text-gray-500 transition-transform ${workspaceDropdownOpen ? 'transform rotate-180' : ''}`} 
+                <SafeIcon
+                  icon={FiChevronDown}
+                  className={`w-4 h-4 text-gray-500 transition-transform ${
+                    workspaceDropdownOpen ? 'transform rotate-180' : ''
+                  }`}
                 />
               </button>
-              
+
               {/* Dropdown */}
               {workspaceDropdownOpen && (
                 <div className="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg border border-gray-200 py-1 max-h-48 overflow-auto">
@@ -98,12 +166,18 @@ const AdminLayout = ({ children }) => {
                         key={workspace.id}
                         onClick={() => handleWorkspaceChange(workspace.id)}
                         className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2 ${
-                          currentWorkspace && currentWorkspace.id === workspace.id ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                          currentWorkspace && currentWorkspace.id === workspace.id
+                            ? 'bg-blue-50 text-blue-600'
+                            : 'text-gray-700'
                         }`}
                       >
-                        <SafeIcon 
-                          icon={FiBriefcase} 
-                          className={`w-4 h-4 ${currentWorkspace && currentWorkspace.id === workspace.id ? 'text-blue-600' : 'text-gray-400'}`} 
+                        <SafeIcon
+                          icon={FiBriefcase}
+                          className={`w-4 h-4 ${
+                            currentWorkspace && currentWorkspace.id === workspace.id
+                              ? 'text-blue-600'
+                              : 'text-gray-400'
+                          }`}
                         />
                         <span className="truncate">{workspace.name}</span>
                       </button>
@@ -153,9 +227,11 @@ const AdminLayout = ({ children }) => {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  {user.name || user.email.split('@')[0]}
+                  {user?.name || user?.email?.split('@')[0]}
                 </p>
-                <p className="text-xs text-gray-500 truncate">{user.role === 'admin' ? 'Administrador' : 'Usuario'}</p>
+                <p className="text-xs text-gray-500 truncate">
+                  {user?.role === 'admin' ? 'Administrador' : 'Usuario'}
+                </p>
               </div>
             </div>
             <button
@@ -196,7 +272,7 @@ const AdminLayout = ({ children }) => {
                       <SafeIcon icon={FiTruck} className="w-6 h-6 text-blue-600" />
                       <div>
                         <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
-                        <p className="text-xs text-gray-600 truncate">{user.email}</p>
+                        <p className="text-xs text-gray-600 truncate">{user?.email}</p>
                       </div>
                     </div>
                     <button
@@ -205,6 +281,59 @@ const AdminLayout = ({ children }) => {
                     >
                       <SafeIcon icon={FiX} className="w-5 h-5" />
                     </button>
+                  </div>
+                </div>
+
+                {/* Mobile Dashboard Selector */}
+                <div className="p-4 border-b border-gray-200">
+                  <div className="relative">
+                    <button
+                      onClick={() => setDashboardDropdownOpen(!dashboardDropdownOpen)}
+                      className="w-full flex items-center justify-between p-2 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <SafeIcon icon={FiMonitor} className="w-4 h-4 text-purple-600" />
+                        <span className="text-sm font-medium text-gray-800 truncate max-w-[160px]">
+                          Cambiar Dashboard
+                        </span>
+                      </div>
+                      <SafeIcon
+                        icon={FiChevronDown}
+                        className={`w-4 h-4 text-gray-500 transition-transform ${
+                          dashboardDropdownOpen ? 'transform rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+
+                    {/* Dashboard Dropdown */}
+                    {dashboardDropdownOpen && (
+                      <div className="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg border border-gray-200 py-1">
+                        {dashboards.map((dashboard) => (
+                          <button
+                            key={dashboard.name}
+                            onClick={() => {
+                              handleDashboardChange(dashboard.href);
+                              closeSidebar();
+                            }}
+                            className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2 ${
+                              location.pathname.startsWith(dashboard.href)
+                                ? 'bg-purple-50 text-purple-600'
+                                : 'text-gray-700'
+                            }`}
+                          >
+                            <SafeIcon
+                              icon={dashboard.icon}
+                              className={`w-4 h-4 ${
+                                location.pathname.startsWith(dashboard.href)
+                                  ? 'text-purple-600'
+                                  : 'text-gray-400'
+                              }`}
+                            />
+                            <span className="truncate">{dashboard.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -221,12 +350,14 @@ const AdminLayout = ({ children }) => {
                           {currentWorkspace ? currentWorkspace.name : 'Seleccionar Workspace'}
                         </span>
                       </div>
-                      <SafeIcon 
-                        icon={FiChevronDown} 
-                        className={`w-4 h-4 text-gray-500 transition-transform ${workspaceDropdownOpen ? 'transform rotate-180' : ''}`} 
+                      <SafeIcon
+                        icon={FiChevronDown}
+                        className={`w-4 h-4 text-gray-500 transition-transform ${
+                          workspaceDropdownOpen ? 'transform rotate-180' : ''
+                        }`}
                       />
                     </button>
-                    
+
                     {/* Mobile Dropdown */}
                     {workspaceDropdownOpen && (
                       <div className="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg border border-gray-200 py-1 max-h-48 overflow-auto">
@@ -239,12 +370,18 @@ const AdminLayout = ({ children }) => {
                                 closeSidebar();
                               }}
                               className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2 ${
-                                currentWorkspace && currentWorkspace.id === workspace.id ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                                currentWorkspace && currentWorkspace.id === workspace.id
+                                  ? 'bg-blue-50 text-blue-600'
+                                  : 'text-gray-700'
                               }`}
                             >
-                              <SafeIcon 
-                                icon={FiBriefcase} 
-                                className={`w-4 h-4 ${currentWorkspace && currentWorkspace.id === workspace.id ? 'text-blue-600' : 'text-gray-400'}`} 
+                              <SafeIcon
+                                icon={FiBriefcase}
+                                className={`w-4 h-4 ${
+                                  currentWorkspace && currentWorkspace.id === workspace.id
+                                    ? 'text-blue-600'
+                                    : 'text-gray-400'
+                                }`}
                               />
                               <span className="truncate">{workspace.name}</span>
                             </button>
@@ -278,10 +415,10 @@ const AdminLayout = ({ children }) => {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        {user.name || user.email.split('@')[0]}
+                        {user?.name || user?.email?.split('@')[0]}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {user.role === 'admin' ? 'Administrador' : 'Usuario'}
+                        {user?.role === 'admin' ? 'Administrador' : 'Usuario'}
                       </p>
                     </div>
                   </div>

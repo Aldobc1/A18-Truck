@@ -37,8 +37,8 @@ function AppContent() {
       <Routes>
         <Route path="/login" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/checker'} replace /> : <Login />} />
         <Route path="/register" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/checker'} replace /> : <Register />} />
-        <Route path="/admin/*" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/login" replace />} />
-        <Route path="/checker" element={user && user.role === 'checker' ? <CheckerDashboard /> : <Navigate to="/login" replace />} />
+        <Route path="/admin/*" element={user ? <AdminDashboard /> : <Navigate to="/login" replace />} />
+        <Route path="/checker/*" element={user ? <CheckerDashboard /> : <Navigate to="/login" replace />} />
         <Route path="/*" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : '/checker') : '/login'} replace />} />
       </Routes>
     </AnimatePresence>

@@ -7,9 +7,9 @@ import supabase from '../../lib/supabase';
 
 const { 
   FiUsers, FiPlus, FiX, FiCheck, FiAlertCircle, 
-  FiUserPlus, FiBriefcase, FiEdit2, FiTrash2, 
+  FiBriefcase, FiEdit2, FiTrash2, 
   FiSearch, FiRefreshCw, FiFilter, FiMail,
-  FiPhone, FiUser
+  FiPhone, FiUser, FiUserPlus
 } = FiIcons;
 
 const WorkspaceManagement = () => {
@@ -19,13 +19,11 @@ const WorkspaceManagement = () => {
     loading, 
     error, 
     createWorkspace, 
-    switchWorkspace, 
-    addUserToWorkspace 
+    switchWorkspace 
   } = useWorkspace();
   
   // Estados para gestión de workspaces
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showInviteForm, setShowInviteForm] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: ''
@@ -44,7 +42,6 @@ const WorkspaceManagement = () => {
     role: 'checker',
     workspaceIds: []
   });
-  const [inviteEmail, setInviteEmail] = useState('');
   
   // Estados para mensajes y procesamiento
   const [formError, setFormError] = useState('');
@@ -74,9 +71,11 @@ const WorkspaceManagement = () => {
     setLoadingUsers(true);
     try {
       // Obtener usuarios con sus relaciones de workspaces
+      // Modificado para solo obtener usuarios activos (inactivo = false o NULL)
       const { data: usersData, error: usersError } = await supabase
         .from('users_a18')
-        .select('*');
+        .select('*')
+        .or('inactivo.is.null,inactivo.eq.false');
       
       if (usersError) throw usersError;
       
@@ -139,41 +138,6 @@ const WorkspaceManagement = () => {
       }, 2000);
     } catch (err) {
       setFormError(err.message || 'Error al crear el workspace');
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  // Función para invitar usuario
-  const handleInviteUser = async (e) => {
-    e.preventDefault();
-    setFormError('');
-    setFormSuccess('');
-    setProcessing(true);
-    
-    try {
-      if (!inviteEmail.trim()) {
-        throw new Error('El correo electrónico es obligatorio');
-      }
-      
-      if (!currentWorkspace) {
-        throw new Error('No hay un workspace seleccionado');
-      }
-      
-      await addUserToWorkspace(inviteEmail, currentWorkspace.id);
-      setFormSuccess('Usuario invitado exitosamente');
-      setInviteEmail('');
-      
-      setTimeout(() => {
-        setShowInviteForm(false);
-        setFormSuccess('');
-        // Actualizar la lista de usuarios
-        if (activeTab === 'users') {
-          fetchUsers();
-        }
-      }, 2000);
-    } catch (err) {
-      setFormError(err.message || 'Error al invitar al usuario');
     } finally {
       setProcessing(false);
     }
@@ -275,7 +239,8 @@ const WorkspaceManagement = () => {
               email: userFormData.email,
               name: userFormData.name,
               phone: userFormData.phone,
-              role: userFormData.role
+              role: userFormData.role,
+              inactivo: false
             }
           ]);
           
@@ -300,7 +265,7 @@ const WorkspaceManagement = () => {
         // Actualizar usuario existente
         console.log('Actualizando usuario:', userFormData);
         
-        // Actualizar datos básicos del usuario
+        // Actualizar datos básicos del usuario, incluyendo el rol
         const { error: updateError } = await supabase
           .from('users_a18')
           .update({ 
@@ -390,43 +355,51 @@ const WorkspaceManagement = () => {
     }
   };
 
-  // Función para eliminar usuario
+  // Función para marcar usuario como inactivo (en lugar de eliminarlo)
   const handleDeleteUser = async (userId) => {
-    if (!confirm('¿Estás seguro de eliminar este usuario? Esta acción no se puede deshacer.')) {
+    if (!confirm('¿Estás seguro de marcar este usuario como inactivo? Esta acción puede revertirse más tarde desde la base de datos.')) {
       return;
     }
     
     setProcessing(true);
+    setFormError('');
+    setFormSuccess('');
     
     try {
-      // Eliminar relaciones de workspace primero
-      const { error: relationsError } = await supabase
-        .from('user_workspaces_a18')
-        .delete()
-        .eq('user_id', userId);
-        
-      if (relationsError) throw relationsError;
+      console.log('Marcando usuario como inactivo, ID:', userId);
       
-      // Eliminar perfil de usuario
-      const { error: profileError } = await supabase
+      // Método 1: Usar RPC para marcar usuario como inactivo
+      const { data: rpcResult, error: rpcError } = await supabase.rpc('mark_user_inactive', {
+        user_id: userId
+      });
+      
+      if (rpcError) {
+        console.error('Error en RPC al marcar usuario como inactivo:', rpcError);
+        // No lanzar error aquí, intentamos el método alternativo
+      } else {
+        console.log('Respuesta de RPC:', rpcResult);
+      }
+      
+      // Método 2: Actualización directa como alternativa
+      const { error: directError } = await supabase
         .from('users_a18')
-        .delete()
+        .update({ inactivo: true })
         .eq('id', userId);
-        
-      if (profileError) throw profileError;
       
-      // Nota: No podemos eliminar el usuario de auth directamente desde el cliente
-      // En una implementación completa, esto requeriría una función en el backend
+      if (directError) {
+        console.error('Error en actualización directa:', directError);
+        throw directError;
+      }
       
-      setFormSuccess('Usuario eliminado exitosamente');
-      fetchUsers();
+      setFormSuccess('Usuario marcado como inactivo exitosamente');
       
+      // Actualizar la lista de usuarios para que ya no muestre al usuario inactivo
       setTimeout(() => {
-        setFormSuccess('');
-      }, 2000);
+        fetchUsers();
+      }, 1000);
     } catch (err) {
-      console.error('Error eliminando usuario:', err);
-      setFormError('Error al eliminar usuario: ' + err.message);
+      console.error('Error marcando usuario como inactivo:', err);
+      setFormError('Error al marcar usuario como inactivo: ' + err.message);
     } finally {
       setProcessing(false);
     }
@@ -471,7 +444,7 @@ const WorkspaceManagement = () => {
       {/* Encabezado y Pestañas */}
       <div className="flex flex-col space-y-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Gestión de Workspaces</h1>
+          <h1 className="text-xl font-bold text-gray-900">Gestión de Usuarios</h1>
           <p className="text-gray-600 text-sm">
             Administra tus workspaces y usuarios
           </p>
@@ -550,16 +523,6 @@ const WorkspaceManagement = () => {
                     <p className="text-xs text-gray-500">{currentWorkspace.description || 'Sin descripción'}</p>
                   </div>
                 </div>
-                
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowInviteForm(true)}
-                  className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 text-sm"
-                >
-                  <SafeIcon icon={FiUserPlus} className="w-4 h-4" />
-                  <span>Invitar Usuario</span>
-                </motion.button>
               </div>
             </div>
           )}
@@ -902,70 +865,6 @@ const WorkspaceManagement = () => {
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   ) : (
                     'Crear Workspace'
-                  )}
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        </motion.div>
-      )}
-
-      {/* Modal Invitar Usuario */}
-      {showInviteForm && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
-        >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-xl shadow-xl p-4 w-full max-w-sm mx-auto"
-          >
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Invitar Usuario</h2>
-              <button
-                onClick={() => setShowInviteForm(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <SafeIcon icon={FiX} className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleInviteUser} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Correo Electrónico
-                </label>
-                <input
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                  placeholder="usuario@ejemplo.com"
-                  required
-                />
-              </div>
-              
-              <div className="flex space-x-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowInviteForm(false)}
-                  className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm"
-                  disabled={processing}
-                >
-                  Cancelar
-                </button>
-                
-                <button
-                  type="submit"
-                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center text-sm"
-                  disabled={processing}
-                >
-                  {processing ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    'Invitar'
                   )}
                 </button>
               </div>
