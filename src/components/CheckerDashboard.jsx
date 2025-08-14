@@ -7,7 +7,7 @@ import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import NFCReader from './common/NFCReader';
 
-const { FiLogOut, FiTruck, FiMapPin, FiClock, FiCheck, FiList, FiPlus, FiChevronDown, FiUser, FiFolder, FiAlertTriangle, FiMenu, FiX, FiSettings, FiMonitor } = FiIcons;
+const { FiLogOut, FiTruck, FiMapPin, FiClock, FiCheck, FiList, FiPlus, FiChevronDown, FiUser, FiFolder, FiAlertTriangle, FiMenu, FiX, FiSettings, FiMonitor, FiShield, FiActivity } = FiIcons;
 
 const CheckerDashboard = () => {
   const { user, logout } = useAuth();
@@ -122,14 +122,21 @@ const CheckerDashboard = () => {
     return { ...record, truck: truck, isCompleted, actualTravelTime, hasAnomaly };
   });
 
-  // Definimos los dashboards disponibles
+  // Definimos los dashboards disponibles según el rol
   const dashboards = [
-    { name: 'Admin', href: '/admin', icon: FiSettings },
-    { name: 'Checker', href: '/checker', icon: FiTruck }
+    { name: 'SuperAdmin', href: '/superadmin', icon: FiShield, roles: ['superadmin'] },
+    { name: 'Admin', href: '/admin', icon: FiSettings, roles: ['admin', 'superadmin', 'supervisor'] },
+    { name: 'Supervisor', href: '/supervisor', icon: FiActivity, roles: ['supervisor', 'superadmin', 'admin'] },
+    { name: 'Checker', href: '/checker', icon: FiTruck, roles: ['checker', 'admin', 'superadmin', 'supervisor'] }
   ];
   
-  // Verificamos explícitamente si el usuario es admin
-  const isAdmin = user && user.role === 'admin';
+  // Filtrar los dashboards según el rol del usuario
+  const availableDashboards = dashboards.filter(dashboard => 
+    dashboard.roles.includes(user?.role || '')
+  );
+  
+  // Verificamos explícitamente si el usuario tiene permisos de cambio de dashboard
+  const canChangeDashboard = user && ['admin', 'superadmin', 'supervisor'].includes(user.role);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -143,8 +150,8 @@ const CheckerDashboard = () => {
             </div>
           </div>
           <div className="flex items-center">
-            {/* Selector de Dashboard para usuarios admin (Visible en versión móvil y desktop) */}
-            {isAdmin && (
+            {/* Selector de Dashboard para usuarios con permisos (Visible en versión móvil y desktop) */}
+            {canChangeDashboard && (
               <div className="hidden sm:block mr-2">
                 <div className="relative">
                   <button 
@@ -164,7 +171,7 @@ const CheckerDashboard = () => {
                   </button>
                   {showDashboardDropdown && (
                     <div className="absolute right-0 z-10 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1">
-                      {dashboards.map((dashboard) => (
+                      {availableDashboards.map((dashboard) => (
                         <button
                           key={dashboard.name}
                           onClick={() => handleDashboardChange(dashboard.href)}
@@ -218,8 +225,8 @@ const CheckerDashboard = () => {
                 <span>Historial</span>
               </button>
               
-              {/* Selector de Dashboard para móvil (solo visible para admin) */}
-              {isAdmin && (
+              {/* Selector de Dashboard para móvil (solo visible para usuarios con permisos) */}
+              {canChangeDashboard && (
                 <div className="relative">
                   <button
                     onClick={() => setShowDashboardDropdown(!showDashboardDropdown)}
@@ -236,7 +243,7 @@ const CheckerDashboard = () => {
                   </button>
                   {showDashboardDropdown && (
                     <div className="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg border border-gray-200 py-1">
-                      {dashboards.map((dashboard) => (
+                      {availableDashboards.map((dashboard) => (
                         <button
                           key={dashboard.name}
                           onClick={() => handleDashboardChange(dashboard.href)}

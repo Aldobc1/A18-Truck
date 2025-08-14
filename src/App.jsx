@@ -20,6 +20,7 @@ function AppContent() {
     const timer = setTimeout(() => {
       setIsInitialized(true);
     }, 500);
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -32,14 +33,32 @@ function AppContent() {
     );
   }
 
+  // Función para determinar la redirección basada en el rol del usuario
+  const getRedirectPath = () => {
+    if (!user) return '/login';
+    
+    switch (user.role) {
+      case 'superadmin':
+        return '/admin'; // Por ahora redirigimos a admin, podríamos tener un dashboard específico
+      case 'admin':
+        return '/admin';
+      case 'supervisor':
+        return '/admin'; // Por ahora redirigimos a admin, podríamos tener un dashboard específico
+      case 'checker':
+        return '/checker';
+      default:
+        return '/login';
+    }
+  };
+
   return (
     <AnimatePresence mode="wait">
       <Routes>
-        <Route path="/login" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/checker'} replace /> : <Login />} />
-        <Route path="/register" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/checker'} replace /> : <Register />} />
+        <Route path="/login" element={user ? <Navigate to={getRedirectPath()} replace /> : <Login />} />
+        <Route path="/register" element={user ? <Navigate to={getRedirectPath()} replace /> : <Register />} />
         <Route path="/admin/*" element={user ? <AdminDashboard /> : <Navigate to="/login" replace />} />
         <Route path="/checker/*" element={user ? <CheckerDashboard /> : <Navigate to="/login" replace />} />
-        <Route path="/*" element={<Navigate to={user ? (user.role === 'admin' ? '/admin' : '/checker') : '/login'} replace />} />
+        <Route path="/*" element={<Navigate to={getRedirectPath()} replace />} />
       </Routes>
     </AnimatePresence>
   );

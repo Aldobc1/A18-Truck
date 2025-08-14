@@ -5,57 +5,35 @@ import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 import supabase from '../../lib/supabase';
 
-const { 
-  FiUsers, FiPlus, FiX, FiCheck, FiAlertCircle, 
-  FiBriefcase, FiEdit2, FiTrash2, 
-  FiSearch, FiRefreshCw, FiFilter, FiMail,
-  FiPhone, FiUser, FiUserPlus
-} = FiIcons;
+const { FiUsers, FiPlus, FiX, FiCheck, FiAlertCircle, FiBriefcase, FiEdit2, FiTrash2, FiSearch, FiRefreshCw, FiFilter, FiMail, FiPhone, FiUser, FiUserPlus } = FiIcons;
 
 const WorkspaceManagement = () => {
-  const { 
-    workspaces, 
-    currentWorkspace, 
-    loading, 
-    error, 
-    createWorkspace, 
-    switchWorkspace 
-  } = useWorkspace();
-  
+  const { workspaces, currentWorkspace, loading, error, createWorkspace, switchWorkspace } = useWorkspace();
+
   // Estados para gestión de workspaces
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: ''
-  });
-  
+  const [formData, setFormData] = useState({ name: '', description: '' });
+
   // Estados para gestión de usuarios
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [showUserForm, setShowUserForm] = useState(false);
   const [userFormMode, setUserFormMode] = useState('create'); // 'create' o 'edit'
-  const [userFormData, setUserFormData] = useState({
-    id: '',
-    email: '',
-    name: '',
-    phone: '',
-    role: 'checker',
-    workspaceIds: []
-  });
-  
+  const [userFormData, setUserFormData] = useState({ id: '', email: '', name: '', phone: '', role: 'checker', workspaceIds: [] });
+
   // Estados para mensajes y procesamiento
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
   const [processing, setProcessing] = useState(false);
-  
+
   // Estado para pestaña activa
   const [activeTab, setActiveTab] = useState('workspaces'); // 'workspaces' o 'users'
-  
+
   // Estado para filtros de usuarios
   const [userFilter, setUserFilter] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [workspaceFilter, setWorkspaceFilter] = useState('all');
-  
+
   // Estado para la contraseña temporal
   const [tempPassword, setTempPassword] = useState('');
 
@@ -71,42 +49,36 @@ const WorkspaceManagement = () => {
     setLoadingUsers(true);
     try {
       // Obtener usuarios con sus relaciones de workspaces
-      // Modificado para solo obtener usuarios activos (inactivo = false o NULL)
+      // Modificado para solo obtener usuarios activos (inactivo=false o NULL)
       const { data: usersData, error: usersError } = await supabase
         .from('users_a18')
         .select('*')
         .or('inactivo.is.null,inactivo.eq.false');
-      
+
       if (usersError) throw usersError;
-      
+
       // Obtener relaciones usuario-workspace
       const { data: userWorkspaces, error: relationsError } = await supabase
         .from('user_workspaces_a18')
         .select('*');
-      
+
       if (relationsError) throw relationsError;
-      
+
       // Combinar datos
       const enhancedUsers = usersData.map(user => {
         const userWorkspaceRelations = userWorkspaces.filter(
           relation => relation.user_id === user.id
         );
-        
         const workspaceIds = userWorkspaceRelations.map(
           relation => relation.workspace_id
         );
-        
         const userWorkspaceNames = workspaces
           .filter(workspace => workspaceIds.includes(workspace.id))
           .map(workspace => workspace.name);
-        
-        return {
-          ...user,
-          workspaceIds,
-          workspaceNames: userWorkspaceNames
-        };
+
+        return { ...user, workspaceIds, workspaceNames: userWorkspaceNames };
       });
-      
+
       setUsers(enhancedUsers);
     } catch (err) {
       console.error('Error fetching users:', err);
@@ -122,16 +94,13 @@ const WorkspaceManagement = () => {
     setFormError('');
     setFormSuccess('');
     setProcessing(true);
-    
     try {
       if (!formData.name.trim()) {
         throw new Error('El nombre del workspace es obligatorio');
       }
-      
       await createWorkspace(formData.name, formData.description);
       setFormSuccess('Workspace creado exitosamente');
       setFormData({ name: '', description: '' });
-      
       setTimeout(() => {
         setShowCreateForm(false);
         setFormSuccess('');
@@ -156,7 +125,6 @@ const WorkspaceManagement = () => {
   const openUserForm = (mode, userData = null) => {
     setUserFormMode(mode);
     setTempPassword(''); // Resetear contraseña temporal
-    
     if (mode === 'edit' && userData) {
       setUserFormData({
         id: userData.id,
@@ -177,7 +145,6 @@ const WorkspaceManagement = () => {
         workspaceIds: workspaces.length > 0 ? [workspaces[0].id] : []
       });
     }
-    
     setShowUserForm(true);
   };
 
@@ -204,32 +171,29 @@ const WorkspaceManagement = () => {
     setFormError('');
     setFormSuccess('');
     setProcessing(true);
-    
     try {
       if (!userFormData.email.trim()) {
         throw new Error('El correo electrónico es obligatorio');
       }
-      
       if (!userFormData.role) {
         throw new Error('El rol es obligatorio');
       }
-
       if (userFormData.workspaceIds.length === 0) {
         throw new Error('Debe seleccionar al menos un workspace');
       }
-      
+
       if (userFormMode === 'create') {
         // Crear nuevo usuario con contraseña temporal
         const password = 'temp' + Math.floor(100000 + Math.random() * 900000);
-        
+
         // Registrar en auth
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: userFormData.email,
           password: password
         });
-        
+
         if (authError) throw authError;
-        
+
         // Crear perfil de usuario
         const { error: profileError } = await supabase
           .from('users_a18')
@@ -243,66 +207,66 @@ const WorkspaceManagement = () => {
               inactivo: false
             }
           ]);
-          
+
         if (profileError) throw profileError;
-        
+
         // Asociar a los workspaces seleccionados
         const workspaceRelations = userFormData.workspaceIds.map(workspaceId => ({
           user_id: authData.user.id,
           workspace_id: workspaceId
         }));
-        
+
         const { error: workspaceError } = await supabase
           .from('user_workspaces_a18')
           .insert(workspaceRelations);
-          
+
         if (workspaceError) throw workspaceError;
-        
+
         // Guardar contraseña temporal para mostrarla
         setTempPassword(password);
         setFormSuccess(`Usuario creado exitosamente. Contraseña temporal: ${password}`);
       } else {
         // Actualizar usuario existente
         console.log('Actualizando usuario:', userFormData);
-        
+
         // Actualizar datos básicos del usuario, incluyendo el rol
         const { error: updateError } = await supabase
           .from('users_a18')
-          .update({ 
+          .update({
             role: userFormData.role,
             name: userFormData.name,
             phone: userFormData.phone
           })
           .eq('id', userFormData.id);
-          
+
         if (updateError) {
           console.error('Error al actualizar usuario:', updateError);
           throw updateError;
         }
-        
+
         // Actualizar relaciones con workspaces
         // 1. Obtener las relaciones actuales del usuario
         const { data: currentRelations, error: fetchError } = await supabase
           .from('user_workspaces_a18')
           .select('*')
           .eq('user_id', userFormData.id);
-          
+
         if (fetchError) {
           console.error('Error al obtener relaciones actuales:', fetchError);
           throw fetchError;
         }
-        
+
         console.log('Relaciones actuales:', currentRelations);
         console.log('Nuevas relaciones (IDs):', userFormData.workspaceIds);
-        
+
         // 2. Identificar relaciones a eliminar y a crear
         const currentWorkspaceIds = currentRelations.map(rel => rel.workspace_id);
         const workspacesToRemove = currentWorkspaceIds.filter(id => !userFormData.workspaceIds.includes(id));
         const workspacesToAdd = userFormData.workspaceIds.filter(id => !currentWorkspaceIds.includes(id));
-        
+
         console.log('Workspaces a eliminar:', workspacesToRemove);
         console.log('Workspaces a añadir:', workspacesToAdd);
-        
+
         // 3. Eliminar relaciones que ya no se necesitan
         if (workspacesToRemove.length > 0) {
           for (const workspaceId of workspacesToRemove) {
@@ -311,34 +275,34 @@ const WorkspaceManagement = () => {
               .delete()
               .eq('user_id', userFormData.id)
               .eq('workspace_id', workspaceId);
-              
+
             if (deleteError) {
               console.error('Error al eliminar relación con workspace:', deleteError);
               throw deleteError;
             }
           }
         }
-        
+
         // 4. Crear nuevas relaciones
         if (workspacesToAdd.length > 0) {
           const newRelations = workspacesToAdd.map(workspaceId => ({
             user_id: userFormData.id,
             workspace_id: workspaceId
           }));
-          
+
           const { error: insertError } = await supabase
             .from('user_workspaces_a18')
             .insert(newRelations);
-            
+
           if (insertError) {
             console.error('Error al insertar nuevas relaciones:', insertError);
             throw insertError;
           }
         }
-        
+
         setFormSuccess('Usuario actualizado exitosamente');
       }
-      
+
       // Limpiar formulario y actualizar lista después de un tiempo
       if (userFormMode === 'edit' || tempPassword === '') {
         setTimeout(() => {
@@ -360,39 +324,39 @@ const WorkspaceManagement = () => {
     if (!confirm('¿Estás seguro de marcar este usuario como inactivo? Esta acción puede revertirse más tarde desde la base de datos.')) {
       return;
     }
-    
+
     setProcessing(true);
     setFormError('');
     setFormSuccess('');
-    
+
     try {
       console.log('Marcando usuario como inactivo, ID:', userId);
-      
+
       // Método 1: Usar RPC para marcar usuario como inactivo
       const { data: rpcResult, error: rpcError } = await supabase.rpc('mark_user_inactive', {
         user_id: userId
       });
-      
+
       if (rpcError) {
         console.error('Error en RPC al marcar usuario como inactivo:', rpcError);
         // No lanzar error aquí, intentamos el método alternativo
       } else {
         console.log('Respuesta de RPC:', rpcResult);
       }
-      
+
       // Método 2: Actualización directa como alternativa
       const { error: directError } = await supabase
         .from('users_a18')
         .update({ inactivo: true })
         .eq('id', userId);
-      
+
       if (directError) {
         console.error('Error en actualización directa:', directError);
         throw directError;
       }
-      
+
       setFormSuccess('Usuario marcado como inactivo exitosamente');
-      
+
       // Actualizar la lista de usuarios para que ya no muestre al usuario inactivo
       setTimeout(() => {
         fetchUsers();
@@ -408,18 +372,16 @@ const WorkspaceManagement = () => {
   // Filtrar usuarios
   const filteredUsers = users.filter(user => {
     // Filtro de búsqueda - busca en email y nombre
-    const searchMatch = 
-      user.email.toLowerCase().includes(userFilter.toLowerCase()) || 
-      (user.name && user.name.toLowerCase().includes(userFilter.toLowerCase()));
+    const searchMatch = user.email.toLowerCase().includes(userFilter.toLowerCase()) || 
+                      (user.name && user.name.toLowerCase().includes(userFilter.toLowerCase()));
     
     // Filtro de rol
     const roleMatch = roleFilter === 'all' || user.role === roleFilter;
     
     // Filtro de workspace
-    const workspaceMatch = 
-      workspaceFilter === 'all' || 
-      (user.workspaceIds && user.workspaceIds.includes(workspaceFilter));
-      
+    const workspaceMatch = workspaceFilter === 'all' || 
+                          (user.workspaceIds && user.workspaceIds.includes(workspaceFilter));
+    
     return searchMatch && roleMatch && workspaceMatch;
   });
 
@@ -449,26 +411,21 @@ const WorkspaceManagement = () => {
             Administra tus workspaces y usuarios
           </p>
         </div>
-        
+
         <div className="flex w-full rounded-lg bg-gray-100 p-1">
           <button
             onClick={() => setActiveTab('workspaces')}
             className={`flex-1 py-2 px-3 rounded-md font-medium transition-colors flex items-center justify-center ${
-              activeTab === 'workspaces'
-                ? 'bg-purple-600 text-white'
-                : 'bg-transparent text-gray-700 hover:bg-gray-200'
+              activeTab === 'workspaces' ? 'bg-purple-600 text-white' : 'bg-transparent text-gray-700 hover:bg-gray-200'
             }`}
           >
             <SafeIcon icon={FiBriefcase} className="w-4 h-4 mr-2" />
             <span>Workspaces</span>
           </button>
-          
           <button
             onClick={() => setActiveTab('users')}
             className={`flex-1 py-2 px-3 rounded-md font-medium transition-colors flex items-center justify-center ${
-              activeTab === 'users'
-                ? 'bg-blue-600 text-white'
-                : 'bg-transparent text-gray-700 hover:bg-gray-200'
+              activeTab === 'users' ? 'bg-blue-600 text-white' : 'bg-transparent text-gray-700 hover:bg-gray-200'
             }`}
           >
             <SafeIcon icon={FiUsers} className="w-4 h-4 mr-2" />
@@ -486,7 +443,7 @@ const WorkspaceManagement = () => {
           </div>
         </div>
       )}
-      
+
       {formError && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           <div className="flex items-center">
@@ -495,7 +452,7 @@ const WorkspaceManagement = () => {
           </div>
         </div>
       )}
-      
+
       {formSuccess && (
         <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
           <div className="flex items-center">
@@ -545,7 +502,6 @@ const WorkspaceManagement = () => {
             <div className="p-3 border-b border-gray-200">
               <h2 className="text-base font-semibold text-gray-900">Mis Workspaces</h2>
             </div>
-            
             <div className="p-3">
               {workspaces.length === 0 ? (
                 <div className="text-center py-6">
@@ -573,23 +529,16 @@ const WorkspaceManagement = () => {
                       onClick={() => handleSwitchWorkspace(workspace.id)}
                     >
                       <div className="flex items-center space-x-3">
-                        <div
-                          className={`p-2 rounded-lg ${
-                            currentWorkspace && currentWorkspace.id === workspace.id
-                              ? 'bg-purple-200'
-                              : 'bg-gray-100'
-                          }`}
-                        >
+                        <div className={`p-2 rounded-lg ${
+                          currentWorkspace && currentWorkspace.id === workspace.id ? 'bg-purple-200' : 'bg-gray-100'
+                        }`}>
                           <SafeIcon
                             icon={FiBriefcase}
                             className={`w-4 h-4 ${
-                              currentWorkspace && currentWorkspace.id === workspace.id
-                                ? 'text-purple-600'
-                                : 'text-gray-600'
+                              currentWorkspace && currentWorkspace.id === workspace.id ? 'text-purple-600' : 'text-gray-600'
                             }`}
                           />
                         </div>
-                        
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 truncate text-sm">
                             {workspace.name}
@@ -598,7 +547,6 @@ const WorkspaceManagement = () => {
                             {workspace.description || 'Sin descripción'}
                           </p>
                         </div>
-                        
                         {currentWorkspace && currentWorkspace.id === workspace.id && (
                           <div className="flex-shrink-0">
                             <SafeIcon icon={FiCheck} className="w-4 h-4 text-purple-600" />
@@ -624,7 +572,6 @@ const WorkspaceManagement = () => {
                 <SafeIcon icon={FiFilter} className="w-4 h-4 text-gray-400" />
                 <h3 className="font-medium text-gray-700 text-sm">Filtros</h3>
               </div>
-              
               <div className="flex space-x-2">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -635,7 +582,6 @@ const WorkspaceManagement = () => {
                 >
                   <SafeIcon icon={FiRefreshCw} className="w-4 h-4" />
                 </motion.button>
-                
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -647,13 +593,9 @@ const WorkspaceManagement = () => {
                 </motion.button>
               </div>
             </div>
-            
             <div className="space-y-3">
               <div className="relative">
-                <SafeIcon
-                  icon={FiSearch}
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                />
+                <SafeIcon icon={FiSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Buscar por email o nombre..."
@@ -662,7 +604,6 @@ const WorkspaceManagement = () => {
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                 />
               </div>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <select
@@ -671,11 +612,12 @@ const WorkspaceManagement = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                   >
                     <option value="all">Todos los roles</option>
+                    <option value="superadmin">Super Administradores</option>
                     <option value="admin">Administradores</option>
+                    <option value="supervisor">Supervisores</option>
                     <option value="checker">Checadores</option>
                   </select>
                 </div>
-                
                 <div>
                   <select
                     value={workspaceFilter}
@@ -706,7 +648,6 @@ const WorkspaceManagement = () => {
                 </span>
               </div>
             </div>
-            
             <div className="p-3">
               {loadingUsers ? (
                 <div className="flex justify-center py-6">
@@ -734,7 +675,6 @@ const WorkspaceManagement = () => {
                             </div>
                           </div>
                         </div>
-                        
                         <div className="flex items-center space-x-1">
                           <button
                             onClick={() => openUserForm('edit', user)}
@@ -752,7 +692,6 @@ const WorkspaceManagement = () => {
                           </button>
                         </div>
                       </div>
-                      
                       <div className="grid grid-cols-2 gap-2 text-xs mb-2">
                         <div className="flex items-start">
                           <SafeIcon icon={FiPhone} className="w-3 h-3 text-gray-400 mr-1 mt-0.5" />
@@ -760,25 +699,26 @@ const WorkspaceManagement = () => {
                         </div>
                         <div>
                           <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
-                            user.role === 'admin' 
-                              ? 'bg-purple-100 text-purple-800' 
-                              : 'bg-blue-100 text-blue-800'
+                            user.role === 'superadmin' ? 'bg-red-100 text-red-800' :
+                            user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
+                            user.role === 'supervisor' ? 'bg-green-100 text-green-800' :
+                            'bg-blue-100 text-blue-800'
                           }`}>
-                            {user.role === 'admin' ? 'Administrador' : 'Checador'}
+                            {user.role === 'superadmin' ? 'Super Administrador' :
+                             user.role === 'admin' ? 'Administrador' :
+                             user.role === 'supervisor' ? 'Supervisor' : 'Checador'}
                           </span>
                         </div>
                       </div>
-                      
                       <div className="text-xs text-gray-600 border-t border-gray-100 pt-1">
-                        <span className="font-medium">Workspaces:</span> {user.workspaceNames && user.workspaceNames.length > 0 
-                          ? user.workspaceNames.join(', ') 
-                          : 'Sin workspace'}
+                        <span className="font-medium">Workspaces:</span>
+                        {user.workspaceNames && user.workspaceNames.length > 0 ? user.workspaceNames.join(', ') : 'Sin workspace'}
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-              
+
               {/* Botón flotante para añadir usuario en móvil */}
               <div className="fixed bottom-6 right-6 md:hidden">
                 <motion.button
@@ -817,7 +757,6 @@ const WorkspaceManagement = () => {
                 <SafeIcon icon={FiX} className="w-6 h-6" />
               </button>
             </div>
-            
             <form onSubmit={handleCreateWorkspace} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -832,7 +771,6 @@ const WorkspaceManagement = () => {
                   required
                 />
               </div>
-              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Descripción (opcional)
@@ -845,7 +783,6 @@ const WorkspaceManagement = () => {
                   rows="3"
                 />
               </div>
-              
               <div className="flex space-x-3 pt-2">
                 <button
                   type="button"
@@ -855,7 +792,6 @@ const WorkspaceManagement = () => {
                 >
                   Cancelar
                 </button>
-                
                 <button
                   type="submit"
                   className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center text-sm"
@@ -896,7 +832,6 @@ const WorkspaceManagement = () => {
                 <SafeIcon icon={FiX} className="w-6 h-6" />
               </button>
             </div>
-            
             <form onSubmit={handleUserForm} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -912,7 +847,6 @@ const WorkspaceManagement = () => {
                   disabled={userFormMode === 'edit'} // No permitir cambiar email en modo edición
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Nombre
@@ -925,7 +859,6 @@ const WorkspaceManagement = () => {
                   placeholder="Nombre completo"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Teléfono
@@ -938,7 +871,6 @@ const WorkspaceManagement = () => {
                   placeholder="Número de teléfono"
                 />
               </div>
-              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Rol
@@ -950,10 +882,11 @@ const WorkspaceManagement = () => {
                   required
                 >
                   <option value="checker">Checador</option>
+                  <option value="supervisor">Supervisor</option>
                   <option value="admin">Administrador</option>
+                  <option value="superadmin">Super Administrador</option>
                 </select>
               </div>
-              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Workspaces
@@ -987,7 +920,7 @@ const WorkspaceManagement = () => {
                   <p className="text-xs text-red-500 mt-1">Selecciona al menos un workspace</p>
                 )}
               </div>
-              
+
               {userFormMode === 'create' && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-xs text-yellow-700">
                   <p className="flex items-center">
@@ -996,7 +929,7 @@ const WorkspaceManagement = () => {
                   </p>
                 </div>
               )}
-              
+
               <div className="flex space-x-3 pt-2">
                 <button
                   type="button"
@@ -1006,7 +939,6 @@ const WorkspaceManagement = () => {
                 >
                   Cancelar
                 </button>
-                
                 <button
                   type="submit"
                   className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center text-sm"
@@ -1047,7 +979,6 @@ const WorkspaceManagement = () => {
                 <SafeIcon icon={FiX} className="w-6 h-6" />
               </button>
             </div>
-            
             <div className="space-y-4">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-900 mb-2 text-sm">Credenciales de acceso</h3>
@@ -1062,7 +993,6 @@ const WorkspaceManagement = () => {
                   </div>
                 </div>
               </div>
-              
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-xs">
                 <div className="flex items-start space-x-2">
                   <SafeIcon icon={FiAlertCircle} className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
@@ -1076,7 +1006,6 @@ const WorkspaceManagement = () => {
                   </div>
                 </div>
               </div>
-              
               <button
                 onClick={closeTempPasswordModal}
                 className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"

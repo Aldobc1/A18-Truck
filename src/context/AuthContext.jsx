@@ -23,13 +23,13 @@ export const AuthProvider = ({ children }) => {
         setLoading(true);
         // Get session from Supabase
         const { data: { session }, error } = await supabase.auth.getSession();
-        
+
         if (error) {
           console.error('Error checking auth session:', error);
           setAuthError(error.message);
           return;
         }
-        
+
         if (session) {
           // Get user profile data
           const { data: userData, error: userError } = await supabase
@@ -122,6 +122,26 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         localStorage.setItem('truckApp_user', JSON.stringify(userData));
         return userData;
+      } else if (email === 'superadmin@gmail.com' && password === 'super123') {
+        const userData = {
+          id: '3',
+          email: 'superadmin@gmail.com',
+          role: 'superadmin',
+          name: 'Super Administrador'
+        };
+        setUser(userData);
+        localStorage.setItem('truckApp_user', JSON.stringify(userData));
+        return userData;
+      } else if (email === 'supervisor@gmail.com' && password === 'super123') {
+        const userData = {
+          id: '4',
+          email: 'supervisor@gmail.com',
+          role: 'supervisor',
+          name: 'Supervisor'
+        };
+        setUser(userData);
+        localStorage.setItem('truckApp_user', JSON.stringify(userData));
+        return userData;
       } else if (password === 'checker123') {
         const userData = {
           id: '2',
@@ -203,7 +223,6 @@ export const AuthProvider = ({ children }) => {
         // Si hay un error al crear el perfil, consideramos que el registro falló
         if (profileError) {
           console.error('Error creating user profile:', profileError);
-          
           // Intentar eliminar el usuario de auth si es posible
           try {
             // Nota: esto requeriría permisos administrativos, así que es posible que falle
@@ -212,11 +231,7 @@ export const AuthProvider = ({ children }) => {
           } catch (cleanupError) {
             console.error('Could not clean up auth user:', cleanupError);
           }
-          
-          return { 
-            success: false, 
-            error: `No se pudo crear tu perfil de usuario: ${profileError.message}` 
-          };
+          return { success: false, error: `No se pudo crear tu perfil de usuario: ${profileError.message}` };
         }
       }
 
@@ -248,11 +263,9 @@ export const AuthProvider = ({ children }) => {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/#/reset-password`,
       });
-      
       if (error) {
         throw error;
       }
-      
       return { success: true };
     } catch (error) {
       setAuthError(error.message);
@@ -266,11 +279,9 @@ export const AuthProvider = ({ children }) => {
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
-      
       if (error) {
         throw error;
       }
-      
       return { success: true };
     } catch (error) {
       setAuthError(error.message);

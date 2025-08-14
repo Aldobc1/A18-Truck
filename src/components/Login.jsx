@@ -20,7 +20,6 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
     try {
       await login(email, password);
     } catch (err) {
@@ -57,10 +56,7 @@ const Login = () => {
               Correo electrónico
             </label>
             <div className="relative">
-              <SafeIcon 
-                icon={FiUser} 
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" 
-              />
+              <SafeIcon icon={FiUser} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="email"
                 value={email}
@@ -77,10 +73,7 @@ const Login = () => {
               Contraseña
             </label>
             <div className="relative">
-              <SafeIcon 
-                icon={FiLock} 
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" 
-              />
+              <SafeIcon icon={FiLock} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
@@ -142,7 +135,9 @@ const Login = () => {
         <div className="mt-5 p-3 bg-gray-50 rounded-lg">
           <p className="text-xs text-gray-600 mb-1">Credenciales de prueba:</p>
           <div className="text-xs text-gray-500 space-y-1">
+            <p><strong>SuperAdmin:</strong> superadmin@gmail.com / super123</p>
             <p><strong>Admin:</strong> barbacastillo@gmail.com / admin123</p>
+            <p><strong>Supervisor:</strong> supervisor@gmail.com / super123</p>
             <p><strong>Checador:</strong> cualquier@email.com / checker123</p>
           </div>
         </div>
