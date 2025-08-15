@@ -319,36 +319,44 @@ const updatedUser = updatedRows[0];
         if (fetchError) throw fetchError;
 
         // 2. Identificar relaciones a eliminar y a crear
-        const currentWorkspaceIds = currentRelations.map(rel => rel.workspace_id);
-        const workspacesToRemove = currentWorkspaceIds.filter(id => !formData.workspaceIds.includes(id));
-        const workspacesToAdd = formData.workspaceIds.filter(id => !currentWorkspaceIds.includes(id));
+// Normalizar a string para evitar mismatches (e.g., '3' vs 3)
+const toStr = (arr) => arr.map(v => String(v));
+
+const currentWorkspaceIds = toStr(currentRelations.map(rel => rel.workspace_id));
+const selectedWorkspaceIds = toStr(formData.workspaceIds || []);
+
+const workspacesToRemove = currentWorkspaceIds.filter(id => !selectedWorkspaceIds.includes(id));
+const workspacesToAdd = selectedWorkspaceIds.filter(id => !currentWorkspaceIds.includes(id));
 
         // 3. Eliminar relaciones que ya no se necesitan
         if (workspacesToRemove.length > 0) {
-          for (const workspaceId of workspacesToRemove) {
-            const { error: deleteError } = await supabase
-              .from('user_workspaces_a18')
-              .delete()
-              .eq('user_id', formData.id)
-              .eq('workspace_id', workspaceId);
+          const { error: deleteError } = await supabase
+            .from('user_workspaces_a18')
+            .delete()
+            .eq('user_id', formData.id)
+            .in('workspace_id', workspacesToRemove);
 
-            if (deleteError) throw deleteError;
-          }
+          if (deleteError) throw deleteError;
         }
 
-        // 4. Crear nuevas relaciones
+        // 4. Crear nuevas relaciones (UPsert)
         if (workspacesToAdd.length > 0) {
-          const newRelations = workspacesToAdd.map(workspaceId => ({
+          const uniqueToAdd = [...new Set(workspacesToAdd)];
+          const newRelations = uniqueToAdd.map((workspaceId) => ({
             user_id: formData.id,
-            workspace_id: workspaceId
+            workspace_id: workspaceId, // sin conversión si es TEXT/UUID
           }));
 
-          const { error: insertError } = await supabase
+          const { error: upsertError } = await supabase
             .from('user_workspaces_a18')
-            .insert(newRelations);
+            .upsert(newRelations, {
+              onConflict: 'user_id,workspace_id',
+              ignoreDuplicates: true,
+            });
 
-          if (insertError) throw insertError;
+          if (upsertError) throw upsertError;
         }
+
         
         setFormSuccess('Usuario actualizado exitosamente');
         setTimeout(() => {
