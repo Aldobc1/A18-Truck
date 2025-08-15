@@ -282,16 +282,32 @@ const SuperAdminUsersManagement = () => {
         }
         
         // Actualizar datos básicos del usuario
-        const { error: updateError } = await supabase
-          .from('users_a18')
-          .update({
-            name: formData.name,
-            phone: formData.phone,
-            role: formData.role
-          })
-          .eq('id', formData.id);
+// Validar que el ID exista antes de actualizar
+if (!formData.id) {
+  throw new Error('Falta el ID del usuario a editar.');
+}
 
-        if (updateError) throw updateError;
+const { data: updatedRows, error: updateError } = await supabase
+  .from('users_a18')
+  .update({
+    name: formData.name,
+    phone: formData.phone,
+    role: formData.role
+  })
+  .eq('id', formData.id)
+  .select('*'); // devolver filas actualizadas
+
+if (updateError) throw updateError;
+
+if (!updatedRows || updatedRows.length === 0) {
+  throw new Error('No se actualizó ninguna fila (ID inválido o sin permisos RLS).');
+}
+if (updatedRows.length > 1) {
+  throw new Error(`Se actualizaron ${updatedRows.length} filas; se esperaba 1. Verifica el filtro .eq('id', ...) y la clave primaria.`);
+}
+
+const updatedUser = updatedRows[0];
+ 
         
         // Actualizar relaciones con workspaces
         // 1. Obtener las relaciones actuales del usuario
