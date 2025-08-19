@@ -13,10 +13,19 @@ serve(async (req) => {
   }
 
   try {
-    // Obtener variables de entorno
+    // ✅ USAR VARIABLES SIN PREFIJO SUPABASE_
     const STRIPE_WEBHOOK_SECRET = Deno.env.get('STRIPE_WEBHOOK_SECRET')!
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')!
+    
+    // ✅ Para Supabase URL y Service Role, usar las variables internas automáticas
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')! // Esta es automática
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')! // Esta es automática
+
+    console.log('🔧 Environment check:')
+    console.log('- STRIPE_WEBHOOK_SECRET:', STRIPE_WEBHOOK_SECRET ? '✅ Set' : '❌ Missing')
+    console.log('- STRIPE_SECRET_KEY:', STRIPE_SECRET_KEY ? '✅ Set' : '❌ Missing')
+    console.log('- SUPABASE_URL:', SUPABASE_URL ? '✅ Set' : '❌ Missing')
+    console.log('- SUPABASE_SERVICE_ROLE_KEY:', SUPABASE_SERVICE_ROLE_KEY ? '✅ Set' : '❌ Missing')
 
     // Verificar webhook signature
     const signature = req.headers.get('stripe-signature')
@@ -26,12 +35,12 @@ serve(async (req) => {
 
     const body = await req.text()
     
-    // Crear cliente Supabase con service role
+    // Crear cliente Supabase
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-    // Importar Stripe (necesario para verificar webhook)
+    // Importar y configurar Stripe
     const { default: Stripe } = await import('https://esm.sh/stripe@14.21.0')
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
+    const stripe = new Stripe(STRIPE_SECRET_KEY, {
       apiVersion: '2023-10-16',
     })
 
