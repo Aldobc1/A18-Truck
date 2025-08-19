@@ -12,15 +12,16 @@ export const useBilling = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Planes disponibles
+  // 🎯 PLANES CON PAYMENT LINKS DE PRODUCCIÓN
   const plans = [
     {
       id: 'basic',
       name: 'Básico',
-      price: 499,
+      price: 499, // $4.99 USD
       currency: 'USD',
       interval: 'month',
-      paymentLink: 'https://buy.stripe.com/test_eVqdR2b0u3qM5z96LwcQU00',
+      // 🚨 REEMPLAZAR CON TU PAYMENT LINK DE PRODUCCIÓN
+      paymentLink: 'https://buy.stripe.com/TU_PAYMENT_LINK_BASICO_AQUI',
       features: [
         'Hasta 5 camiones',
         'Gestión básica de proyectos',
@@ -32,10 +33,11 @@ export const useBilling = () => {
     {
       id: 'business',
       name: 'Empresarial',
-      price: 899,
+      price: 899, // $8.99 USD
       currency: 'USD',
       interval: 'month',
-      paymentLink: 'https://buy.stripe.com/test_00w3co7OiaTe8Ll4DocQU02',
+      // 🚨 REEMPLAZAR CON TU PAYMENT LINK DE PRODUCCIÓN
+      paymentLink: 'https://buy.stripe.com/TU_PAYMENT_LINK_BUSINESS_AQUI',
       features: [
         'Hasta 25 camiones',
         'Gestión avanzada de proyectos',
@@ -50,10 +52,11 @@ export const useBilling = () => {
     {
       id: 'professional',
       name: 'Profesional',
-      price: 1499,
+      price: 1499, // $14.99 USD
       currency: 'USD',
       interval: 'month',
-      paymentLink: 'https://buy.stripe.com/test_eVq6oA7Oi0eAbXxgm6cQU01',
+      // 🚨 REEMPLAZAR CON TU PAYMENT LINK DE PRODUCCIÓN
+      paymentLink: 'https://buy.stripe.com/TU_PAYMENT_LINK_PROFESSIONAL_AQUI',
       features: [
         'Camiones ilimitados',
         'Proyectos ilimitados',
@@ -127,7 +130,7 @@ export const useBilling = () => {
     }
   };
 
-  // Create subscription
+  // Create subscription - SOLO PARA TRACKING LOCAL
   const createSubscription = async (planId) => {
     if (!user || !currentWorkspace) {
       throw new Error('Usuario o workspace no disponible');
@@ -139,18 +142,19 @@ export const useBilling = () => {
         throw new Error('Plan no encontrado');
       }
 
-      // Crear suscripción en la base de datos
+      // ⚠️ IMPORTANTE: Esto solo crea un registro local
+      // El pago real se procesa en Stripe externamente
       const { data, error } = await supabase
         .from('subscriptions_a18')
         .insert([{
           workspace_id: currentWorkspace.id,
           user_id: user.id,
           plan_id: planId,
-          status: 'active',
+          status: 'pending', // Comienza como pendiente hasta confirmar pago
           current_period_start: new Date().toISOString(),
           current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          stripe_subscription_id: `sub_demo_${Date.now()}`,
-          stripe_customer_id: `cus_demo_${user.id}`
+          stripe_subscription_id: `sub_pending_${Date.now()}`, // Temporal
+          stripe_customer_id: `cus_pending_${user.id}` // Temporal
         }])
         .select()
         .single();
@@ -177,6 +181,7 @@ export const useBilling = () => {
         .from('subscriptions_a18')
         .update({
           plan_id: planId,
+          status: 'pending', // Marca como pendiente hasta confirmar pago
           updated_at: new Date().toISOString()
         })
         .eq('id', subscription.id)
@@ -223,14 +228,13 @@ export const useBilling = () => {
     }
   };
 
-  // Add payment method
+  // Add payment method - PLACEHOLDER para futura implementación
   const addPaymentMethod = async (paymentMethodData) => {
     if (!user || !currentWorkspace) {
       throw new Error('Usuario o workspace no disponible');
     }
 
     try {
-      // Si es el primer método de pago, marcarlo como predeterminado
       const isFirstMethod = paymentMethods.length === 0;
 
       const { data, error } = await supabase
@@ -263,13 +267,11 @@ export const useBilling = () => {
   // Set default payment method
   const setDefaultPaymentMethod = async (paymentMethodId) => {
     try {
-      // Quitar el predeterminado de todos los métodos
       await supabase
         .from('payment_methods_a18')
         .update({ is_default: false })
         .eq('workspace_id', currentWorkspace.id);
 
-      // Establecer el nuevo predeterminado
       const { data, error } = await supabase
         .from('payment_methods_a18')
         .update({ is_default: true })
@@ -279,8 +281,7 @@ export const useBilling = () => {
 
       if (error) throw error;
 
-      // Actualizar el estado local
-      setPaymentMethods(prev => 
+      setPaymentMethods(prev =>
         prev.map(pm => ({
           ...pm,
           is_default: pm.id === paymentMethodId
@@ -332,10 +333,8 @@ export const useBilling = () => {
     plans,
     loading,
     error,
-    
     // Computed
     currentPlan: getCurrentPlan(),
-    
     // Actions
     fetchBillingData,
     createSubscription,

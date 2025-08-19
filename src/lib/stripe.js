@@ -1,6 +1,19 @@
 import { loadStripe } from '@stripe/stripe-js';
 
-// This is your test publishable API key.
-const stripePromise = loadStripe('pk_test_51QYRlh3DpfSyrm2BgLFpN8YEYGEKEOSZT7qJHKr1Z6Jy7QoHDd1GNg7vYrF7uPu9UwBKLZqOqTmcXzJZFW5KbOcG00zZTgJHvQ');
+// 🚨 REEMPLAZAR CON TU PUBLISHABLE KEY DE PRODUCCIÓN
+// Ejemplo: pk_live_51ABC123...
+const STRIPE_PUBLISHABLE_KEY = 'pk_live_TU_PUBLISHABLE_KEY_AQUI';
+
+// Validar que la clave esté configurada
+if (STRIPE_PUBLISHABLE_KEY === 'pk_live_TU_PUBLISHABLE_KEY_AQUI') {
+  console.warn('⚠️ Configura tu Publishable Key de Stripe en src/lib/stripe.js');
+  throw new Error('Stripe Publishable Key no configurada');
+}
+
+if (!STRIPE_PUBLISHABLE_KEY.startsWith('pk_live_')) {
+  console.warn('⚠️ Asegúrate de usar la clave de PRODUCCIÓN (pk_live_...)');
+}
+
+const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
 
 export default stripePromise;

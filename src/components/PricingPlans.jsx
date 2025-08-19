@@ -1,25 +1,21 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Elements } from '@stripe/react-stripe-js';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
-import stripePromise from '../lib/stripe';
-import StripeCheckout from './stripe/StripeCheckout';
 
-const { FiCheck, FiCreditCard, FiTruck, FiUsers, FiBarChart, FiShield, FiZap, FiStar } = FiIcons;
+const { FiCheck, FiExternalLink, FiTruck, FiUsers, FiBarChart, FiShield, FiZap, FiStar } = FiIcons;
 
 const PricingPlans = () => {
   const [isAnnual, setIsAnnual] = useState(false);
-  const [showStripeCheckout, setShowStripeCheckout] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState(null);
 
+  // 🎯 PLANES CON PAYMENT LINKS DE PRODUCCIÓN
   const plans = [
     {
       id: "basic",
       name: "Básico",
-      amount: 499,
-      priceId: "price_1RxtxD3DpfSyrm2Bl6SI8cOe",
-      paymentLink: "https://buy.stripe.com/test_eVqdR2b0u3qM5z96LwcQU00",
+      amount: 499, // $4.99 USD
+      // 🚨 REEMPLAZAR CON TU PAYMENT LINK DE PRODUCCIÓN
+      paymentLink: "https://buy.stripe.com/TU_PAYMENT_LINK_BASICO_AQUI",
       currency: "USD",
       interval: "month",
       description: "Perfecto para pequeñas operaciones",
@@ -36,9 +32,9 @@ const PricingPlans = () => {
     {
       id: "business",
       name: "Empresarial",
-      amount: 899,
-      priceId: "price_1RxtxD3DpfSyrm2BkBQ9FRZS",
-      paymentLink: "https://buy.stripe.com/test_00w3co7OiaTe8Ll4DocQU02",
+      amount: 899, // $8.99 USD
+      // 🚨 REEMPLAZAR CON TU PAYMENT LINK DE PRODUCCIÓN
+      paymentLink: "https://buy.stripe.com/TU_PAYMENT_LINK_BUSINESS_AQUI",
       currency: "USD",
       interval: "month",
       description: "Ideal para empresas en crecimiento",
@@ -58,9 +54,9 @@ const PricingPlans = () => {
     {
       id: "professional",
       name: "Profesional",
-      amount: 1499,
-      priceId: "price_1RxtxD3DpfSyrm2BWn1FdDdu",
-      paymentLink: "https://buy.stripe.com/test_eVq6oA7Oi0eAbXxgm6cQU01",
+      amount: 1499, // $14.99 USD
+      // 🚨 REEMPLAZAR CON TU PAYMENT LINK DE PRODUCCIÓN
+      paymentLink: "https://buy.stripe.com/TU_PAYMENT_LINK_PROFESSIONAL_AQUI",
       currency: "USD",
       interval: "month",
       description: "Para operaciones empresariales grandes",
@@ -79,31 +75,17 @@ const PricingPlans = () => {
     }
   ];
 
+  // ✅ SIEMPRE abrir checkout externo de Stripe
   const handlePlanClick = (plan) => {
-    // Para demo, primero intentamos con Stripe Checkout integrado
-    setSelectedPlan({
-      ...plan,
-      price: isAnnual ? Math.round(plan.amount * 0.8) : plan.amount
-    });
-    setShowStripeCheckout(true);
+    console.log('🔗 Opening Stripe checkout for plan:', plan.name);
     
-    // Fallback: abrir enlace de Stripe si el checkout integrado falla
-    // setTimeout(() => {
-    //   window.open(plan.paymentLink, '_blank');
-    // }, 500);
-  };
-
-  const handlePaymentSuccess = (paymentIntent) => {
-    console.log('Payment succeeded:', paymentIntent);
-    alert('¡Pago exitoso! Tu suscripción ha sido activada.');
-  };
-
-  const handlePaymentError = (error) => {
-    console.error('Payment failed:', error);
-    // Fallback a Stripe Checkout externo
-    if (selectedPlan?.paymentLink) {
-      window.open(selectedPlan.paymentLink, '_blank');
+    if (!plan.paymentLink || plan.paymentLink.includes('TU_PAYMENT_LINK')) {
+      alert('Payment link no configurado para este plan. Configura los enlaces en PricingPlans.jsx');
+      return;
     }
+
+    // Abrir checkout externo de Stripe
+    window.open(plan.paymentLink, '_blank');
   };
 
   const getColorClasses = (color, popular = false) => {
@@ -133,6 +115,7 @@ const PricingPlans = () => {
         accent: 'text-green-600'
       }
     };
+
     return colors[color];
   };
 
@@ -156,7 +139,7 @@ const PricingPlans = () => {
           >
             Elige el plan perfecto para tu operación de camiones
           </motion.p>
-
+          
           {/* Billing Toggle */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -190,6 +173,19 @@ const PricingPlans = () => {
           </motion.div>
         </div>
 
+        {/* Aviso de Configuración */}
+        <div className="mb-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <SafeIcon icon={FiShield} className="w-5 h-5 text-yellow-600" />
+            <div>
+              <p className="text-yellow-800 font-medium text-sm">⚠️ Configuración Requerida</p>
+              <p className="text-yellow-700 text-xs">
+                Para usar estos planes en producción, configura tu Publishable Key de Stripe y los Payment Links en los archivos correspondientes.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-6">
           {plans.map((plan, index) => {
@@ -220,9 +216,9 @@ const PricingPlans = () => {
                 <div className={`inline-flex items-center justify-center w-12 h-12 rounded-lg mb-6 ${
                   plan.popular ? 'bg-white bg-opacity-20' : 'bg-gray-100'
                 }`}>
-                  <SafeIcon 
-                    icon={plan.icon} 
-                    className={`w-6 h-6 ${plan.popular ? 'text-white' : colorClasses.icon}`} 
+                  <SafeIcon
+                    icon={plan.icon}
+                    className={`w-6 h-6 ${plan.popular ? 'text-white' : colorClasses.icon}`}
                   />
                 </div>
 
@@ -240,7 +236,7 @@ const PricingPlans = () => {
                 <div className="mb-8">
                   <div className="flex items-baseline">
                     <span className={`text-4xl font-bold ${colorClasses.text}`}>
-                      ${price}
+                      ${(price / 100).toFixed(2)}
                     </span>
                     <span className={`text-lg ml-1 ${plan.popular ? 'text-white text-opacity-75' : 'text-gray-500'}`}>
                       /{isAnnual ? 'año' : 'mes'}
@@ -248,7 +244,7 @@ const PricingPlans = () => {
                   </div>
                   {isAnnual && (
                     <p className={`text-sm mt-1 ${plan.popular ? 'text-white text-opacity-75' : 'text-gray-500'}`}>
-                      ${plan.amount}/mes facturado anualmente
+                      ${(plan.amount / 100).toFixed(2)}/mes facturado anualmente
                     </p>
                   )}
                 </div>
@@ -257,11 +253,11 @@ const PricingPlans = () => {
                 <ul className="space-y-4 mb-8">
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-start">
-                      <SafeIcon 
-                        icon={FiCheck} 
+                      <SafeIcon
+                        icon={FiCheck}
                         className={`w-5 h-5 mt-0.5 mr-3 flex-shrink-0 ${
                           plan.popular ? 'text-white' : colorClasses.accent
-                        }`} 
+                        }`}
                       />
                       <span className={`text-sm ${plan.popular ? 'text-white text-opacity-90' : 'text-gray-600'}`}>
                         {feature}
@@ -276,20 +272,20 @@ const PricingPlans = () => {
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handlePlanClick(plan)}
                   className={`w-full py-3 px-6 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2 ${
-                    plan.popular 
-                      ? 'bg-white text-purple-600 hover:bg-gray-100' 
+                    plan.popular
+                      ? 'bg-white text-purple-600 hover:bg-gray-100'
                       : colorClasses.button
                   }`}
                 >
-                  <SafeIcon icon={FiCreditCard} className="w-5 h-5" />
-                  <span>Comenzar Ahora</span>
+                  <SafeIcon icon={FiExternalLink} className="w-5 h-5" />
+                  <span>Pagar con Stripe</span>
                 </motion.button>
 
                 {/* Security Badge */}
                 <div className="flex items-center justify-center mt-4 space-x-2">
-                  <SafeIcon 
-                    icon={FiShield} 
-                    className={`w-4 h-4 ${plan.popular ? 'text-white text-opacity-75' : 'text-gray-400'}`} 
+                  <SafeIcon
+                    icon={FiShield}
+                    className={`w-4 h-4 ${plan.popular ? 'text-white text-opacity-75' : 'text-gray-400'}`}
                   />
                   <span className={`text-xs ${plan.popular ? 'text-white text-opacity-75' : 'text-gray-500'}`}>
                     Pago seguro con Stripe
@@ -365,17 +361,6 @@ const PricingPlans = () => {
           </div>
         </motion.div>
       </div>
-
-      {/* Stripe Checkout Modal */}
-      <Elements stripe={stripePromise}>
-        <StripeCheckout
-          isOpen={showStripeCheckout}
-          onClose={() => setShowStripeCheckout(false)}
-          planDetails={selectedPlan}
-          onSuccess={handlePaymentSuccess}
-          onError={handlePaymentError}
-        />
-      </Elements>
     </div>
   );
 };
