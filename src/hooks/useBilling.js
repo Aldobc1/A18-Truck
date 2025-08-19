@@ -332,10 +332,10 @@ export const useBilling = () => {
     plans,
     loading,
     error,
-
+    
     // Computed
     currentPlan: getCurrentPlan(),
-
+    
     // Actions
     fetchBillingData,
     createSubscription,

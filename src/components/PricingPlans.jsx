@@ -1,20 +1,26 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Elements } from '@stripe/react-stripe-js';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
+import stripePromise from '../lib/stripe';
+import StripeCheckout from './stripe/StripeCheckout';
 
 const { FiCheck, FiCreditCard, FiTruck, FiUsers, FiBarChart, FiShield, FiZap, FiStar } = FiIcons;
 
 const PricingPlans = () => {
   const [isAnnual, setIsAnnual] = useState(false);
+  const [showStripeCheckout, setShowStripeCheckout] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
 
   const plans = [
     {
+      id: "basic",
       name: "Básico",
       amount: 499,
       priceId: "price_1RxtxD3DpfSyrm2Bl6SI8cOe",
       paymentLink: "https://buy.stripe.com/test_eVqdR2b0u3qM5z96LwcQU00",
-      currency: "usd",
+      currency: "USD",
       interval: "month",
       description: "Perfecto para pequeñas operaciones",
       icon: FiTruck,
@@ -28,11 +34,12 @@ const PricingPlans = () => {
       ]
     },
     {
+      id: "business",
       name: "Empresarial",
       amount: 899,
       priceId: "price_1RxtxD3DpfSyrm2BkBQ9FRZS",
       paymentLink: "https://buy.stripe.com/test_00w3co7OiaTe8Ll4DocQU02",
-      currency: "usd",
+      currency: "USD",
       interval: "month",
       description: "Ideal para empresas en crecimiento",
       icon: FiUsers,
@@ -49,11 +56,12 @@ const PricingPlans = () => {
       ]
     },
     {
+      id: "professional",
       name: "Profesional",
       amount: 1499,
       priceId: "price_1RxtxD3DpfSyrm2BWn1FdDdu",
       paymentLink: "https://buy.stripe.com/test_eVq6oA7Oi0eAbXxgm6cQU01",
-      currency: "usd",
+      currency: "USD",
       interval: "month",
       description: "Para operaciones empresariales grandes",
       icon: FiBarChart,
@@ -71,8 +79,31 @@ const PricingPlans = () => {
     }
   ];
 
-  const handlePlanClick = (paymentLink) => {
-    window.open(paymentLink, '_blank');
+  const handlePlanClick = (plan) => {
+    // Para demo, primero intentamos con Stripe Checkout integrado
+    setSelectedPlan({
+      ...plan,
+      price: isAnnual ? Math.round(plan.amount * 0.8) : plan.amount
+    });
+    setShowStripeCheckout(true);
+    
+    // Fallback: abrir enlace de Stripe si el checkout integrado falla
+    // setTimeout(() => {
+    //   window.open(plan.paymentLink, '_blank');
+    // }, 500);
+  };
+
+  const handlePaymentSuccess = (paymentIntent) => {
+    console.log('Payment succeeded:', paymentIntent);
+    alert('¡Pago exitoso! Tu suscripción ha sido activada.');
+  };
+
+  const handlePaymentError = (error) => {
+    console.error('Payment failed:', error);
+    // Fallback a Stripe Checkout externo
+    if (selectedPlan?.paymentLink) {
+      window.open(selectedPlan.paymentLink, '_blank');
+    }
   };
 
   const getColorClasses = (color, popular = false) => {
@@ -110,14 +141,14 @@ const PricingPlans = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4"
           >
             Planes de Suscripción
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -127,7 +158,7 @@ const PricingPlans = () => {
           </motion.p>
 
           {/* Billing Toggle */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -164,7 +195,7 @@ const PricingPlans = () => {
           {plans.map((plan, index) => {
             const colorClasses = getColorClasses(plan.color, plan.popular);
             const price = isAnnual ? Math.round(plan.amount * 0.8) : plan.amount;
-            
+
             return (
               <motion.div
                 key={plan.name}
@@ -243,7 +274,7 @@ const PricingPlans = () => {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => handlePlanClick(plan.paymentLink)}
+                  onClick={() => handlePlanClick(plan)}
                   className={`w-full py-3 px-6 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2 ${
                     plan.popular 
                       ? 'bg-white text-purple-600 hover:bg-gray-100' 
@@ -270,7 +301,7 @@ const PricingPlans = () => {
         </div>
 
         {/* Bottom CTA */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
@@ -297,7 +328,7 @@ const PricingPlans = () => {
         </motion.div>
 
         {/* FAQ Section */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
@@ -334,6 +365,17 @@ const PricingPlans = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Stripe Checkout Modal */}
+      <Elements stripe={stripePromise}>
+        <StripeCheckout
+          isOpen={showStripeCheckout}
+          onClose={() => setShowStripeCheckout(false)}
+          planDetails={selectedPlan}
+          onSuccess={handlePaymentSuccess}
+          onError={handlePaymentError}
+        />
+      </Elements>
     </div>
   );
 };

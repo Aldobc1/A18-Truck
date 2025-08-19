@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Elements } from '@stripe/react-stripe-js';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 import { useBilling } from '../../hooks/useBilling';
+import stripePromise from '../../lib/stripe';
+import StripeCheckout from '../stripe/StripeCheckout';
+import PaymentMethodForm from '../stripe/PaymentMethodForm';
 
-const { FiCreditCard, FiDollarSign, FiCalendar, FiDownload, FiCheck, FiX, FiAlertTriangle, FiRefreshCw, FiPackage, FiZap, FiStar, FiTruck, FiUsers, FiBarChart } = FiIcons;
+const { 
+  FiCreditCard, FiDollarSign, FiCalendar, FiDownload, FiCheck, FiX, 
+  FiAlertTriangle, FiRefreshCw, FiPackage, FiZap, FiStar, FiTruck, 
+  FiUsers, FiBarChart, FiPlus 
+} = FiIcons;
 
 const BillingManagement = () => {
   const {
@@ -25,11 +33,23 @@ const BillingManagement = () => {
   } = useBilling();
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showStripeCheckout, setShowStripeCheckout] = useState(false);
+  const [showPaymentMethodForm, setShowPaymentMethodForm] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [success, setSuccess] = useState('');
   const [localError, setLocalError] = useState('');
 
-  const handleUpgrade = async (plan) => {
+  // ✅ CORREGIDO: Función para seleccionar plan y abrir checkout integrado
+  const handlePlanSelect = (plan) => {
+    console.log('Plan selected:', plan);
+    setSelectedPlan(plan);
+    setShowUpgradeModal(false);
+    setShowStripeCheckout(true); // Abrir modal de Stripe integrado
+  };
+
+  // ✅ CORREGIDO: Manejar éxito del pago
+  const handlePaymentSuccess = async (paymentIntent) => {
     setProcessing(true);
     setLocalError('');
     setSuccess('');
@@ -37,28 +57,48 @@ const BillingManagement = () => {
     try {
       if (!subscription) {
         // Crear nueva suscripción
-        await createSubscription(plan.id);
+        await createSubscription(selectedPlan.id);
         setSuccess('Suscripción creada exitosamente');
       } else {
         // Actualizar suscripción existente
-        await updateSubscription(plan.id);
+        await updateSubscription(selectedPlan.id);
         setSuccess('Plan actualizado exitosamente');
       }
-      
-      setShowUpgradeModal(false);
-      
-      // También abrir el enlace de pago de Stripe
-      window.open(plan.paymentLink, '_blank');
 
       setTimeout(() => {
         setSuccess('');
       }, 3000);
-
     } catch (err) {
       console.error('Error upgrading plan:', err);
       setLocalError('Error al actualizar el plan: ' + err.message);
     } finally {
       setProcessing(false);
+    }
+  };
+
+  // ✅ CORREGIDO: Manejar error del pago con fallback
+  const handlePaymentError = (error) => {
+    console.error('Payment failed:', error);
+    setLocalError('Error en el pago: ' + error.message);
+    
+    // Fallback: abrir enlace directo de Stripe si el checkout integrado falla
+    if (selectedPlan?.paymentLink) {
+      console.log('Opening Stripe hosted checkout as fallback');
+      setTimeout(() => {
+        window.open(selectedPlan.paymentLink, '_blank');
+      }, 2000);
+    }
+  };
+
+  const handleAddPaymentMethod = async (paymentMethod) => {
+    try {
+      await addPaymentMethod(paymentMethod);
+      setSuccess('Método de pago agregado exitosamente');
+      setTimeout(() => {
+        setSuccess('');
+      }, 3000);
+    } catch (err) {
+      setLocalError('Error al agregar método de pago: ' + err.message);
     }
   };
 
@@ -74,11 +114,9 @@ const BillingManagement = () => {
     try {
       await cancelSubscription();
       setSuccess('Suscripción cancelada exitosamente');
-      
       setTimeout(() => {
         setSuccess('');
       }, 3000);
-
     } catch (err) {
       console.error('Error canceling subscription:', err);
       setLocalError('Error al cancelar la suscripción: ' + err.message);
@@ -251,8 +289,11 @@ const BillingManagement = () => {
               <SafeIcon icon={FiCreditCard} className="w-5 h-5 mr-2 text-purple-600" />
               Métodos de Pago
             </h2>
-            <button className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2">
-              <SafeIcon icon={FiCreditCard} className="w-4 h-4" />
+            <button 
+              onClick={() => setShowPaymentMethodForm(true)}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+            >
+              <SafeIcon icon={FiPlus} className="w-4 h-4" />
               <span>Agregar Tarjeta</span>
             </button>
           </div>
@@ -261,7 +302,10 @@ const BillingManagement = () => {
           {paymentMethods.length > 0 ? (
             <div className="space-y-4">
               {paymentMethods.map((method) => (
-                <div key={method.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                <div
+                  key={method.id}
+                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                >
                   <div className="flex items-center space-x-3">
                     <div className="bg-gray-100 p-2 rounded">
                       <SafeIcon icon={FiCreditCard} className="w-5 h-5 text-gray-600" />
@@ -285,14 +329,14 @@ const BillingManagement = () => {
                   </div>
                   <div className="flex space-x-2">
                     {!method.is_default && (
-                      <button 
+                      <button
                         onClick={() => setDefaultPaymentMethod(method.id)}
                         className="text-blue-600 hover:text-blue-800 text-sm"
                       >
                         Hacer principal
                       </button>
                     )}
-                    <button 
+                    <button
                       onClick={() => removePaymentMethod(method.id)}
                       className="text-red-600 hover:text-red-800 text-sm"
                     >
@@ -437,7 +481,7 @@ const BillingManagement = () => {
                   </ul>
 
                   <button
-                    onClick={() => handleUpgrade(plan)}
+                    onClick={() => handlePlanSelect(plan)}
                     disabled={processing}
                     className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors disabled:opacity-50 ${
                       plan.popular
@@ -465,6 +509,31 @@ const BillingManagement = () => {
             </div>
           </motion.div>
         </div>
+      )}
+
+      {/* Stripe Checkout Modal - ✅ CORREGIDO: Envolver en Elements */}
+      {showStripeCheckout && (
+        <Elements stripe={stripePromise}>
+          <StripeCheckout
+            isOpen={showStripeCheckout}
+            onClose={() => setShowStripeCheckout(false)}
+            planDetails={selectedPlan}
+            onSuccess={handlePaymentSuccess}
+            onError={handlePaymentError}
+          />
+        </Elements>
+      )}
+      
+      {/* Payment Method Form */}
+      {showPaymentMethodForm && (
+        <Elements stripe={stripePromise}>
+          <PaymentMethodForm
+            isOpen={showPaymentMethodForm}
+            onClose={() => setShowPaymentMethodForm(false)}
+            onSuccess={handleAddPaymentMethod}
+            onError={(error) => setLocalError('Error al agregar método de pago: ' + error.message)}
+          />
+        </Elements>
       )}
     </div>
   );
