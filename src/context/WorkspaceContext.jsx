@@ -94,11 +94,16 @@ export const WorkspaceProvider = ({ children }) => {
       if (!user) throw new Error('Usuario no autenticado');
       
       // Insertar nuevo workspace
-      const { data: newWorkspace, error: workspaceError } = await supabase
-        .from('workspaces_a18')
-        .insert([{ name, description }])
-        .select()
-        .single();
+const { data: newWorkspace, error: workspaceError } = await supabase
+  .from('workspaces_a18')
+  .insert([{
+    name,
+    description,
+    creator_id: user.id,
+    creator_email: user.email
+  }])
+  .select()
+  .single();
 
       if (workspaceError) {
         throw new Error(workspaceError.message);
