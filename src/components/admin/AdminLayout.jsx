@@ -6,7 +6,11 @@ import { useWorkspace } from '../../context/WorkspaceContext';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 
-const { FiTruck, FiSettings, FiMapPin, FiFileText, FiLogOut, FiHome, FiFolder, FiMenu, FiX, FiBriefcase, FiUser, FiChevronDown, FiGrid, FiMonitor, FiShield, FiActivity, FiCreditCard, FiUserCheck } = FiIcons;
+const {
+  FiTruck, FiSettings, FiMapPin, FiFileText, FiLogOut, FiHome, FiFolder, FiMenu, FiX,
+  FiBriefcase, FiUser, FiChevronDown, FiGrid, FiMonitor, FiShield, FiActivity,
+  FiCreditCard, FiUserCheck, FiZap
+} = FiIcons;
 
 const AdminLayout = ({ children }) => {
   const { user, logout } = useAuth();
@@ -32,6 +36,8 @@ const AdminLayout = ({ children }) => {
     { name: 'Registros', href: '/admin/records', icon: FiFileText, roles: ['admin', 'superadmin', 'supervisor'] },
     { name: 'Usuarios', href: '/admin/workspaces', icon: FiUser, roles: ['admin', 'superadmin'] },
     { name: 'Planes', href: '/admin/pricing', icon: FiCreditCard, roles: ['admin', 'superadmin'] },
+    // ✅ Añadir WebhookTester solo para SuperAdmin
+    { name: 'Webhooks', href: '/admin/webhooks', icon: FiZap, roles: ['superadmin'] },
   ];
 
   const dashboards = [
@@ -108,7 +114,12 @@ const AdminLayout = ({ children }) => {
                     Cambiar Dashboard
                   </span>
                 </div>
-                <SafeIcon icon={FiChevronDown} className={`w-4 h-4 text-gray-500 transition-transform ${dashboardDropdownOpen ? 'transform rotate-180' : ''}`} />
+                <SafeIcon
+                  icon={FiChevronDown}
+                  className={`w-4 h-4 text-gray-500 transition-transform ${
+                    dashboardDropdownOpen ? 'transform rotate-180' : ''
+                  }`}
+                />
               </button>
 
               {/* Dashboard Dropdown */}
@@ -118,10 +129,20 @@ const AdminLayout = ({ children }) => {
                     <button
                       key={dashboard.name}
                       onClick={() => handleDashboardChange(dashboard.href)}
-                      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2 ${location.pathname.startsWith(dashboard.href) ? 'bg-purple-50 text-purple-600' : 'text-gray-700'
-                        }`}
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2 ${
+                        location.pathname.startsWith(dashboard.href)
+                          ? 'bg-purple-50 text-purple-600'
+                          : 'text-gray-700'
+                      }`}
                     >
-                      <SafeIcon icon={dashboard.icon} className={`w-4 h-4 ${location.pathname.startsWith(dashboard.href) ? 'text-purple-600' : 'text-gray-400'}`} />
+                      <SafeIcon
+                        icon={dashboard.icon}
+                        className={`w-4 h-4 ${
+                          location.pathname.startsWith(dashboard.href)
+                            ? 'text-purple-600'
+                            : 'text-gray-400'
+                        }`}
+                      />
                       <span className="truncate">{dashboard.name}</span>
                     </button>
                   ))}
@@ -143,7 +164,12 @@ const AdminLayout = ({ children }) => {
                     {currentWorkspace ? currentWorkspace.name : 'Seleccionar Workspace'}
                   </span>
                 </div>
-                <SafeIcon icon={FiChevronDown} className={`w-4 h-4 text-gray-500 transition-transform ${workspaceDropdownOpen ? 'transform rotate-180' : ''}`} />
+                <SafeIcon
+                  icon={FiChevronDown}
+                  className={`w-4 h-4 text-gray-500 transition-transform ${
+                    workspaceDropdownOpen ? 'transform rotate-180' : ''
+                  }`}
+                />
               </button>
 
               {/* Dropdown */}
@@ -154,10 +180,20 @@ const AdminLayout = ({ children }) => {
                       <button
                         key={workspace.id}
                         onClick={() => handleWorkspaceChange(workspace.id)}
-                        className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2 ${currentWorkspace && currentWorkspace.id === workspace.id ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-                          }`}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2 ${
+                          currentWorkspace && currentWorkspace.id === workspace.id
+                            ? 'bg-blue-50 text-blue-600'
+                            : 'text-gray-700'
+                        }`}
                       >
-                        <SafeIcon icon={FiBriefcase} className={`w-4 h-4 ${currentWorkspace && currentWorkspace.id === workspace.id ? 'text-blue-600' : 'text-gray-400'}`} />
+                        <SafeIcon
+                          icon={FiBriefcase}
+                          className={`w-4 h-4 ${
+                            currentWorkspace && currentWorkspace.id === workspace.id
+                              ? 'text-blue-600'
+                              : 'text-gray-400'
+                          }`}
+                        />
                         <span className="truncate">{workspace.name}</span>
                       </button>
                     ))
@@ -188,10 +224,11 @@ const AdminLayout = ({ children }) => {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`flex items-center px-5 py-3 text-sm font-medium transition-colors ${isActive
-                      ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
+                    className={`flex items-center px-5 py-3 text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
                   >
                     <SafeIcon icon={item.icon} className="w-5 h-5 mr-3" />
                     {item.name}
@@ -215,10 +252,17 @@ const AdminLayout = ({ children }) => {
                     {user?.name || user?.email?.split('@')[0]}
                   </p>
                   <p className="text-xs text-gray-500 truncate">
-                    {user?.role === 'superadmin' ? 'Super Administrador' : user?.role === 'admin' ? 'Administrador' : user?.role === 'supervisor' ? 'Supervisor' : 'Usuario'}
+                    {user?.role === 'superadmin' ? 'Super Administrador' :
+                     user?.role === 'admin' ? 'Administrador' :
+                     user?.role === 'supervisor' ? 'Supervisor' : 'Usuario'}
                   </p>
                 </div>
-                <SafeIcon icon={FiChevronDown} className={`w-4 h-4 text-gray-400 transition-transform ${userDropdownOpen ? 'transform rotate-180' : ''}`} />
+                <SafeIcon
+                  icon={FiChevronDown}
+                  className={`w-4 h-4 text-gray-400 transition-transform ${
+                    userDropdownOpen ? 'transform rotate-180' : ''
+                  }`}
+                />
               </button>
 
               {/* User Dropdown */}
@@ -307,7 +351,12 @@ const AdminLayout = ({ children }) => {
                           Cambiar Dashboard
                         </span>
                       </div>
-                      <SafeIcon icon={FiChevronDown} className={`w-4 h-4 text-gray-500 transition-transform ${dashboardDropdownOpen ? 'transform rotate-180' : ''}`} />
+                      <SafeIcon
+                        icon={FiChevronDown}
+                        className={`w-4 h-4 text-gray-500 transition-transform ${
+                          dashboardDropdownOpen ? 'transform rotate-180' : ''
+                        }`}
+                      />
                     </button>
 
                     {/* Dashboard Dropdown */}
@@ -320,10 +369,20 @@ const AdminLayout = ({ children }) => {
                               handleDashboardChange(dashboard.href);
                               closeSidebar();
                             }}
-                            className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2 ${location.pathname.startsWith(dashboard.href) ? 'bg-purple-50 text-purple-600' : 'text-gray-700'
-                              }`}
+                            className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2 ${
+                              location.pathname.startsWith(dashboard.href)
+                                ? 'bg-purple-50 text-purple-600'
+                                : 'text-gray-700'
+                            }`}
                           >
-                            <SafeIcon icon={dashboard.icon} className={`w-4 h-4 ${location.pathname.startsWith(dashboard.href) ? 'text-purple-600' : 'text-gray-400'}`} />
+                            <SafeIcon
+                              icon={dashboard.icon}
+                              className={`w-4 h-4 ${
+                                location.pathname.startsWith(dashboard.href)
+                                  ? 'text-purple-600'
+                                  : 'text-gray-400'
+                              }`}
+                            />
                             <span className="truncate">{dashboard.name}</span>
                           </button>
                         ))}
@@ -345,7 +404,12 @@ const AdminLayout = ({ children }) => {
                           {currentWorkspace ? currentWorkspace.name : 'Seleccionar Workspace'}
                         </span>
                       </div>
-                      <SafeIcon icon={FiChevronDown} className={`w-4 h-4 text-gray-500 transition-transform ${workspaceDropdownOpen ? 'transform rotate-180' : ''}`} />
+                      <SafeIcon
+                        icon={FiChevronDown}
+                        className={`w-4 h-4 text-gray-500 transition-transform ${
+                          workspaceDropdownOpen ? 'transform rotate-180' : ''
+                        }`}
+                      />
                     </button>
 
                     {/* Mobile Dropdown */}
@@ -359,10 +423,20 @@ const AdminLayout = ({ children }) => {
                                 handleWorkspaceChange(workspace.id);
                                 closeSidebar();
                               }}
-                              className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2 ${currentWorkspace && currentWorkspace.id === workspace.id ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-                                }`}
+                              className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2 ${
+                                currentWorkspace && currentWorkspace.id === workspace.id
+                                  ? 'bg-blue-50 text-blue-600'
+                                  : 'text-gray-700'
+                              }`}
                             >
-                              <SafeIcon icon={FiBriefcase} className={`w-4 h-4 ${currentWorkspace && currentWorkspace.id === workspace.id ? 'text-blue-600' : 'text-gray-400'}`} />
+                              <SafeIcon
+                                icon={FiBriefcase}
+                                className={`w-4 h-4 ${
+                                  currentWorkspace && currentWorkspace.id === workspace.id
+                                    ? 'text-blue-600'
+                                    : 'text-gray-400'
+                                }`}
+                              />
                               <span className="truncate">{workspace.name}</span>
                             </button>
                           ))
@@ -398,11 +472,12 @@ const AdminLayout = ({ children }) => {
                         {user?.name || user?.email?.split('@')[0]}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {user?.role === 'superadmin' ? 'Super Administrador' : user?.role === 'admin' ? 'Administrador' : user?.role === 'supervisor' ? 'Supervisor' : 'Usuario'}
+                        {user?.role === 'superadmin' ? 'Super Administrador' :
+                         user?.role === 'admin' ? 'Administrador' :
+                         user?.role === 'supervisor' ? 'Supervisor' : 'Usuario'}
                       </p>
                     </div>
                   </div>
-                  
                   <div className="space-y-1">
                     <Link
                       to="/admin/profile"
@@ -434,10 +509,11 @@ const AdminLayout = ({ children }) => {
                           key={item.name}
                           to={item.href}
                           onClick={closeSidebar}
-                          className={`flex items-center px-4 py-3 text-sm font-medium transition-colors ${isActive
-                            ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
-                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                            }`}
+                          className={`flex items-center px-4 py-3 text-sm font-medium transition-colors ${
+                            isActive
+                              ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
+                              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                          }`}
                         >
                           <SafeIcon icon={item.icon} className="w-5 h-5 mr-3" />
                           {item.name}

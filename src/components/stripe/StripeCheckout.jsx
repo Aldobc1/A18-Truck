@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
-import {
-  Elements,
-  useStripe,
-  useElements
-} from '@stripe/react-stripe-js';
+import { Elements, useStripe, useElements } from '@stripe/react-stripe-js';
 import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
@@ -12,16 +8,10 @@ import CheckoutForm from './CheckoutForm';
 
 const { FiX, FiLoader, FiExternalLink, FiCreditCard } = FiIcons;
 
-// Cargar Stripe
-const stripePromise = loadStripe('pk_test_51QYRlh3DpfSyrm2BgLFpN8YEYGEKEOSZT7qJHKr1Z6Jy7QoHDd1GNg7vYrF7uPu9UwBKLZqOqTmcXzJZFW5KbOcG00zZTgJHvQ');
+// ✅ Usar tu Publishable Key de producción
+const stripePromise = loadStripe('pk_live_51RsqI63xfQJC1PHSLXPQnFOzwam6mVIXFMCEXQAUyKYBgM03U3j7BdevpQhdzcM29fDW6eFHzdG03p9zDYWyN8c400h74bHpVS');
 
-const StripeCheckout = ({ 
-  isOpen, 
-  onClose, 
-  planDetails,
-  onSuccess,
-  onError 
-}) => {
+const StripeCheckout = ({ isOpen, onClose, planDetails, onSuccess, onError }) => {
   const [clientSecret, setClientSecret] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -39,19 +29,17 @@ const StripeCheckout = ({
 
     try {
       console.log('🚀 Creating payment intent for plan:', planDetails);
-      
+
       // En un entorno real, esto sería una llamada a tu backend
       // Por ahora, simulamos la creación del PaymentIntent
-      
       // Simular delay de API
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       // ✅ Para demo, usar client_secret simulado con datos del plan
       const mockClientSecret = `pi_${planDetails.id}_${Date.now()}_secret_${Math.random().toString(36).substr(2, 9)}`;
-      
       console.log('✅ Mock client secret created:', mockClientSecret);
+
       setClientSecret(mockClientSecret);
-      
     } catch (err) {
       console.error('❌ Error creating payment intent:', err);
       setError('Error al preparar el pago. Intentando con checkout externo...');
@@ -174,7 +162,7 @@ const StripeCheckout = ({
             <p className="text-gray-600 mb-6 text-sm">
               Te redirigiremos a la página segura de Stripe para completar tu pago.
             </p>
-            
+
             {/* Plan Details */}
             <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
               <h4 className="font-semibold text-gray-900 mb-2">Resumen del Plan</h4>
@@ -204,7 +192,7 @@ const StripeCheckout = ({
                 Cancelar
               </button>
             </div>
-            
+
             <p className="text-xs text-gray-500 mt-4">
               🔒 Pago 100% seguro procesado por Stripe
             </p>

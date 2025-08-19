@@ -8,14 +8,14 @@ const { FiCheck, FiExternalLink, FiTruck, FiUsers, FiBarChart, FiShield, FiZap, 
 const PricingPlans = () => {
   const [isAnnual, setIsAnnual] = useState(false);
 
-  // 🎯 PLANES CON PAYMENT LINKS DE PRODUCCIÓN
+  // 🎯 PLANES CON TUS PAYMENT LINKS REALES DE PRODUCCIÓN
   const plans = [
     {
       id: "basic",
       name: "Básico",
       amount: 499, // $4.99 USD
-      // 🚨 REEMPLAZAR CON TU PAYMENT LINK DE PRODUCCIÓN
-      paymentLink: "https://buy.stripe.com/TU_PAYMENT_LINK_BASICO_AQUI",
+      // ✅ Usar tus Payment Links reales de Stripe
+      paymentLink: "https://buy.stripe.com/cNi28kd7n9s2fANgikaVa03",
       currency: "USD",
       interval: "month",
       description: "Perfecto para pequeñas operaciones",
@@ -33,8 +33,8 @@ const PricingPlans = () => {
       id: "business",
       name: "Empresarial",
       amount: 899, // $8.99 USD
-      // 🚨 REEMPLAZAR CON TU PAYMENT LINK DE PRODUCCIÓN
-      paymentLink: "https://buy.stripe.com/TU_PAYMENT_LINK_BUSINESS_AQUI",
+      // ✅ Usar tus Payment Links reales de Stripe
+      paymentLink: "https://buy.stripe.com/aFa7sEgjz7jU3S5fegaVa04",
       currency: "USD",
       interval: "month",
       description: "Ideal para empresas en crecimiento",
@@ -55,8 +55,8 @@ const PricingPlans = () => {
       id: "professional",
       name: "Profesional",
       amount: 1499, // $14.99 USD
-      // 🚨 REEMPLAZAR CON TU PAYMENT LINK DE PRODUCCIÓN
-      paymentLink: "https://buy.stripe.com/TU_PAYMENT_LINK_PROFESSIONAL_AQUI",
+      // ✅ Usar tus Payment Links reales de Stripe
+      paymentLink: "https://buy.stripe.com/14AcMYc3jfQqfANc24aVa05",
       currency: "USD",
       interval: "month",
       description: "Para operaciones empresariales grandes",
@@ -79,8 +79,8 @@ const PricingPlans = () => {
   const handlePlanClick = (plan) => {
     console.log('🔗 Opening Stripe checkout for plan:', plan.name);
     
-    if (!plan.paymentLink || plan.paymentLink.includes('TU_PAYMENT_LINK')) {
-      alert('Payment link no configurado para este plan. Configura los enlaces en PricingPlans.jsx');
+    if (!plan.paymentLink) {
+      alert('Payment link no disponible para este plan');
       return;
     }
 
@@ -173,14 +173,14 @@ const PricingPlans = () => {
           </motion.div>
         </div>
 
-        {/* Aviso de Configuración */}
-        <div className="mb-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+        {/* Aviso de Configuración - Ya no es necesario */}
+        <div className="mb-8 p-4 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-center space-x-2">
-            <SafeIcon icon={FiShield} className="w-5 h-5 text-yellow-600" />
+            <SafeIcon icon={FiShield} className="w-5 h-5 text-green-600" />
             <div>
-              <p className="text-yellow-800 font-medium text-sm">⚠️ Configuración Requerida</p>
-              <p className="text-yellow-700 text-xs">
-                Para usar estos planes en producción, configura tu Publishable Key de Stripe y los Payment Links en los archivos correspondientes.
+              <p className="text-green-800 font-medium text-sm">✅ Stripe Configurado</p>
+              <p className="text-green-700 text-xs">
+                Los pagos están configurados y listos para procesar transacciones seguras con Stripe.
               </p>
             </div>
           </div>

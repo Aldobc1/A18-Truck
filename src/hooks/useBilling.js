@@ -12,15 +12,15 @@ export const useBilling = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // 🎯 PLANES CON PAYMENT LINKS DE PRODUCCIÓN
+  // 🎯 PLANES CON PAYMENT LINKS DE PRODUCCIÓN ACTUALIZADOS
   const plans = [
     {
       id: 'basic',
       name: 'Básico',
-      price: 499, // $499 MXN
-      currency: 'MXN',
+      price: 499, // $4.99 USD
+      currency: 'USD',
       interval: 'month',
-      // 🚨 REEMPLAZAR CON TU PAYMENT LINK DE PRODUCCIÓN
+      // ✅ Usar tus Payment Links reales de Stripe
       paymentLink: 'https://buy.stripe.com/cNi28kd7n9s2fANgikaVa03',
       features: [
         'Hasta 5 camiones',
@@ -33,10 +33,10 @@ export const useBilling = () => {
     {
       id: 'business',
       name: 'Empresarial',
-      price: 899, // $899 MXN
-      currency: 'MXN',
+      price: 899, // $8.99 USD
+      currency: 'USD',
       interval: 'month',
-      // 🚨 REEMPLAZAR CON TU PAYMENT LINK DE PRODUCCIÓN
+      // ✅ Usar tus Payment Links reales de Stripe
       paymentLink: 'https://buy.stripe.com/aFa7sEgjz7jU3S5fegaVa04',
       features: [
         'Hasta 25 camiones',
@@ -52,10 +52,10 @@ export const useBilling = () => {
     {
       id: 'professional',
       name: 'Profesional',
-      price: 1499, // $1499 MXN
-      currency: 'MXN',
+      price: 1499, // $14.99 USD
+      currency: 'USD',
       interval: 'month',
-      // 🚨 REEMPLAZAR CON TU PAYMENT LINK DE PRODUCCIÓN
+      // ✅ Usar tus Payment Links reales de Stripe
       paymentLink: 'https://buy.stripe.com/14AcMYc3jfQqfANc24aVa05',
       features: [
         'Camiones ilimitados',
@@ -81,6 +81,8 @@ export const useBilling = () => {
     setError('');
 
     try {
+      console.log('🔄 Fetching billing data for workspace:', currentWorkspace.id);
+
       // Obtener suscripción
       const { data: subData, error: subError } = await supabase
         .from('subscriptions_a18')
@@ -89,9 +91,11 @@ export const useBilling = () => {
         .maybeSingle();
 
       if (subError && subError.code !== 'PGRST116') {
+        console.error('Error fetching subscription:', subError);
         throw subError;
       }
 
+      console.log('📄 Subscription data:', subData);
       setSubscription(subData);
 
       // Obtener facturas
@@ -103,9 +107,11 @@ export const useBilling = () => {
         .limit(10);
 
       if (invoicesError) {
+        console.error('Error fetching invoices:', invoicesError);
         throw invoicesError;
       }
 
+      console.log('📋 Invoices data:', invoicesData);
       setInvoices(invoicesData || []);
 
       // Obtener métodos de pago
@@ -117,9 +123,11 @@ export const useBilling = () => {
         .order('is_default', { ascending: false });
 
       if (paymentError) {
+        console.error('Error fetching payment methods:', paymentError);
         throw paymentError;
       }
 
+      console.log('💳 Payment methods data:', paymentMethodsData);
       setPaymentMethods(paymentMethodsData || []);
 
     } catch (err) {
@@ -142,6 +150,8 @@ export const useBilling = () => {
         throw new Error('Plan no encontrado');
       }
 
+      console.log('📝 Creating subscription for plan:', planId);
+
       // ⚠️ IMPORTANTE: Esto solo crea un registro local
       // El pago real se procesa en Stripe externamente
       const { data, error } = await supabase
@@ -159,8 +169,12 @@ export const useBilling = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating subscription:', error);
+        throw error;
+      }
 
+      console.log('✅ Subscription created:', data);
       setSubscription(data);
       return data;
 
@@ -177,6 +191,8 @@ export const useBilling = () => {
     }
 
     try {
+      console.log('🔄 Updating subscription to plan:', planId);
+
       const { data, error } = await supabase
         .from('subscriptions_a18')
         .update({
@@ -188,8 +204,12 @@ export const useBilling = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating subscription:', error);
+        throw error;
+      }
 
+      console.log('✅ Subscription updated:', data);
       setSubscription(data);
       return data;
 
@@ -206,6 +226,8 @@ export const useBilling = () => {
     }
 
     try {
+      console.log('❌ Cancelling subscription:', subscription.id);
+
       const { data, error } = await supabase
         .from('subscriptions_a18')
         .update({
@@ -217,8 +239,12 @@ export const useBilling = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error cancelling subscription:', error);
+        throw error;
+      }
 
+      console.log('✅ Subscription cancelled:', data);
       setSubscription(data);
       return data;
 
