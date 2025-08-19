@@ -17,11 +17,11 @@ export const useBilling = () => {
     {
       id: 'basic',
       name: 'Básico',
-      price: 499, // $4.99 USD
-      currency: 'USD',
+      price: 499, // $499 MXN
+      currency: 'MXN',
       interval: 'month',
       // 🚨 REEMPLAZAR CON TU PAYMENT LINK DE PRODUCCIÓN
-      paymentLink: 'https://buy.stripe.com/TU_PAYMENT_LINK_BASICO_AQUI',
+      paymentLink: 'https://buy.stripe.com/cNi28kd7n9s2fANgikaVa03',
       features: [
         'Hasta 5 camiones',
         'Gestión básica de proyectos',
@@ -33,11 +33,11 @@ export const useBilling = () => {
     {
       id: 'business',
       name: 'Empresarial',
-      price: 899, // $8.99 USD
-      currency: 'USD',
+      price: 899, // $899 MXN
+      currency: 'MXN',
       interval: 'month',
       // 🚨 REEMPLAZAR CON TU PAYMENT LINK DE PRODUCCIÓN
-      paymentLink: 'https://buy.stripe.com/TU_PAYMENT_LINK_BUSINESS_AQUI',
+      paymentLink: 'https://buy.stripe.com/aFa7sEgjz7jU3S5fegaVa04',
       features: [
         'Hasta 25 camiones',
         'Gestión avanzada de proyectos',
@@ -52,11 +52,11 @@ export const useBilling = () => {
     {
       id: 'professional',
       name: 'Profesional',
-      price: 1499, // $14.99 USD
-      currency: 'USD',
+      price: 1499, // $1499 MXN
+      currency: 'MXN',
       interval: 'month',
       // 🚨 REEMPLAZAR CON TU PAYMENT LINK DE PRODUCCIÓN
-      paymentLink: 'https://buy.stripe.com/TU_PAYMENT_LINK_PROFESSIONAL_AQUI',
+      paymentLink: 'https://buy.stripe.com/14AcMYc3jfQqfANc24aVa05',
       features: [
         'Camiones ilimitados',
         'Proyectos ilimitados',
