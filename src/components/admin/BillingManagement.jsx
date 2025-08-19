@@ -1,170 +1,65 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useAuth } from '../../context/AuthContext';
-import { useWorkspace } from '../../context/WorkspaceContext';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
-import supabase from '../../lib/supabase';
+import { useBilling } from '../../hooks/useBilling';
 
-const { FiCreditCard, FiDollarSign, FiCalendar, FiDownload, FiCheck, FiX, FiAlertTriangle, FiRefreshCw, FiExternalLink, FiPackage, FiClock, FiZap, FiStar, FiTruck, FiUsers, FiBarChart } = FiIcons;
+const { FiCreditCard, FiDollarSign, FiCalendar, FiDownload, FiCheck, FiX, FiAlertTriangle, FiRefreshCw, FiPackage, FiZap, FiStar, FiTruck, FiUsers, FiBarChart } = FiIcons;
 
 const BillingManagement = () => {
-  const { user } = useAuth();
-  const { currentWorkspace } = useWorkspace();
-  const [subscription, setSubscription] = useState(null);
-  const [invoices, setInvoices] = useState([]);
-  const [paymentMethods, setPaymentMethods] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const {
+    subscription,
+    invoices,
+    paymentMethods,
+    plans,
+    loading,
+    error,
+    currentPlan,
+    fetchBillingData,
+    createSubscription,
+    updateSubscription,
+    cancelSubscription,
+    addPaymentMethod,
+    setDefaultPaymentMethod,
+    removePaymentMethod
+  } = useBilling();
+
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [success, setSuccess] = useState('');
+  const [localError, setLocalError] = useState('');
 
-  // Planes disponibles
-  const plans = [
-    {
-      id: 'basic',
-      name: 'Básico',
-      price: 499,
-      currency: 'USD',
-      interval: 'month',
-      paymentLink: 'https://buy.stripe.com/test_eVqdR2b0u3qM5z96LwcQU00',
-      features: [
-        'Hasta 5 camiones',
-        'Gestión básica de proyectos',
-        'Registros de salida/entrega',
-        'Soporte por email',
-        'Dashboard básico'
-      ],
-      icon: FiTruck,
-      color: 'blue'
-    },
-    {
-      id: 'business',
-      name: 'Empresarial',
-      price: 899,
-      currency: 'USD',
-      interval: 'month',
-      paymentLink: 'https://buy.stripe.com/test_00w3co7OiaTe8Ll4DocQU02',
-      features: [
-        'Hasta 25 camiones',
-        'Gestión avanzada de proyectos',
-        'Múltiples workspaces',
-        'Análisis y reportes',
-        'Soporte prioritario',
-        'Integración NFC',
-        'Gestión de usuarios'
-      ],
-      icon: FiUsers,
-      color: 'purple',
-      popular: true
-    },
-    {
-      id: 'professional',
-      name: 'Profesional',
-      price: 1499,
-      currency: 'USD',
-      interval: 'month',
-      paymentLink: 'https://buy.stripe.com/test_eVq6oA7Oi0eAbXxgm6cQU01',
-      features: [
-        'Camiones ilimitados',
-        'Proyectos ilimitados',
-        'Workspaces ilimitados',
-        'Analytics avanzados',
-        'Soporte 24/7',
-        'API personalizada',
-        'Integraciones personalizadas',
-        'Gerente de cuenta dedicado'
-      ],
-      icon: FiBarChart,
-      color: 'green'
-    }
-  ];
+  const handleUpgrade = async (plan) => {
+    setProcessing(true);
+    setLocalError('');
+    setSuccess('');
 
-  useEffect(() => {
-    fetchBillingData();
-  }, [user, currentWorkspace]);
-
-  const fetchBillingData = async () => {
-    if (!user || !currentWorkspace) return;
-
-    setLoading(true);
     try {
-      // Obtener información de suscripción
-      const { data: subData, error: subError } = await supabase
-        .from('subscriptions_a18')
-        .select('*')
-        .eq('workspace_id', currentWorkspace.id)
-        .single();
-
-      if (subError && subError.code !== 'PGRST116') {
-        console.error('Error fetching subscription:', subError);
-      } else if (subData) {
-        setSubscription(subData);
+      if (!subscription) {
+        // Crear nueva suscripción
+        await createSubscription(plan.id);
+        setSuccess('Suscripción creada exitosamente');
+      } else {
+        // Actualizar suscripción existente
+        await updateSubscription(plan.id);
+        setSuccess('Plan actualizado exitosamente');
       }
+      
+      setShowUpgradeModal(false);
+      
+      // También abrir el enlace de pago de Stripe
+      window.open(plan.paymentLink, '_blank');
 
-      // Obtener facturas (simuladas para demo)
-      const mockInvoices = [
-        {
-          id: 'inv_001',
-          date: new Date('2024-01-01'),
-          amount: 899,
-          currency: 'USD',
-          status: 'paid',
-          description: 'Plan Empresarial - Enero 2024',
-          downloadUrl: '#'
-        },
-        {
-          id: 'inv_002',
-          date: new Date('2024-02-01'),
-          amount: 899,
-          currency: 'USD',
-          status: 'paid',
-          description: 'Plan Empresarial - Febrero 2024',
-          downloadUrl: '#'
-        },
-        {
-          id: 'inv_003',
-          date: new Date('2024-03-01'),
-          amount: 899,
-          currency: 'USD',
-          status: 'pending',
-          description: 'Plan Empresarial - Marzo 2024',
-          downloadUrl: null
-        }
-      ];
-      setInvoices(mockInvoices);
-
-      // Obtener métodos de pago (simulados para demo)
-      const mockPaymentMethods = [
-        {
-          id: 'pm_001',
-          type: 'card',
-          brand: 'visa',
-          last4: '4242',
-          expMonth: 12,
-          expYear: 2025,
-          isDefault: true
-        }
-      ];
-      setPaymentMethods(mockPaymentMethods);
+      setTimeout(() => {
+        setSuccess('');
+      }, 3000);
 
     } catch (err) {
-      console.error('Error fetching billing data:', err);
-      setError('Error al cargar la información de facturación');
+      console.error('Error upgrading plan:', err);
+      setLocalError('Error al actualizar el plan: ' + err.message);
     } finally {
-      setLoading(false);
+      setProcessing(false);
     }
-  };
-
-  const getCurrentPlan = () => {
-    if (!subscription) return null;
-    return plans.find(plan => plan.id === subscription.plan_id) || plans[0];
-  };
-
-  const handleUpgrade = (plan) => {
-    // Abrir el enlace de pago de Stripe en una nueva ventana
-    window.open(plan.paymentLink, '_blank');
   };
 
   const handleCancelSubscription = async () => {
@@ -173,26 +68,20 @@ const BillingManagement = () => {
     }
 
     setProcessing(true);
+    setLocalError('');
+    setSuccess('');
+
     try {
-      // En un entorno real, aquí se haría la llamada a Stripe para cancelar
-      // Por ahora simulamos la cancelación
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      const { error } = await supabase
-        .from('subscriptions_a18')
-        .update({
-          status: 'cancelled',
-          cancelled_at: new Date().toISOString()
-        })
-        .eq('workspace_id', currentWorkspace.id);
-
-      if (error) throw error;
-
+      await cancelSubscription();
       setSuccess('Suscripción cancelada exitosamente');
-      fetchBillingData();
+      
+      setTimeout(() => {
+        setSuccess('');
+      }, 3000);
+
     } catch (err) {
       console.error('Error canceling subscription:', err);
-      setError('Error al cancelar la suscripción');
+      setLocalError('Error al cancelar la suscripción: ' + err.message);
     } finally {
       setProcessing(false);
     }
@@ -236,8 +125,6 @@ const BillingManagement = () => {
     }
   };
 
-  const currentPlan = getCurrentPlan();
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -264,11 +151,11 @@ const BillingManagement = () => {
       </div>
 
       {/* Mensajes */}
-      {error && (
+      {(error || localError) && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           <div className="flex items-center">
             <SafeIcon icon={FiAlertTriangle} className="w-5 h-5 mr-2 flex-shrink-0" />
-            <p className="text-sm">{error}</p>
+            <p className="text-sm">{error || localError}</p>
           </div>
         </div>
       )}
@@ -295,7 +182,7 @@ const BillingManagement = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div className="bg-blue-100 p-3 rounded-lg">
-                  <SafeIcon icon={currentPlan.icon} className="w-6 h-6 text-blue-600" />
+                  <SafeIcon icon={currentPlan.icon || FiTruck} className="w-6 h-6 text-blue-600" />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">{currentPlan.name}</h3>
@@ -318,6 +205,7 @@ const BillingManagement = () => {
                 <button
                   onClick={() => setShowUpgradeModal(true)}
                   className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                  disabled={processing}
                 >
                   <SafeIcon icon={FiZap} className="w-4 h-4" />
                   <span>Cambiar Plan</span>
@@ -384,22 +272,30 @@ const BillingManagement = () => {
                           **** **** **** {method.last4}
                         </span>
                         <span className="text-sm text-gray-500 uppercase">{method.brand}</span>
-                        {method.isDefault && (
+                        {method.is_default && (
                           <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                             Principal
                           </span>
                         )}
                       </div>
                       <p className="text-sm text-gray-500">
-                        Expira {method.expMonth.toString().padStart(2, '0')}/{method.expYear}
+                        Expira {method.exp_month?.toString().padStart(2, '0')}/{method.exp_year}
                       </p>
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    <button className="text-blue-600 hover:text-blue-800 text-sm">
-                      Editar
-                    </button>
-                    <button className="text-red-600 hover:text-red-800 text-sm">
+                    {!method.is_default && (
+                      <button 
+                        onClick={() => setDefaultPaymentMethod(method.id)}
+                        className="text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        Hacer principal
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => removePaymentMethod(method.id)}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
                       Eliminar
                     </button>
                   </div>
@@ -451,13 +347,13 @@ const BillingManagement = () => {
                   {invoices.map((invoice) => (
                     <tr key={invoice.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {invoice.date.toLocaleDateString()}
+                        {new Date(invoice.invoice_date).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {invoice.description}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        ${invoice.amount} {invoice.currency.toUpperCase()}
+                        ${invoice.amount} {invoice.currency}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getInvoiceStatusColor(invoice.status)}`}>
@@ -465,7 +361,7 @@ const BillingManagement = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        {invoice.downloadUrl && (
+                        {invoice.download_url && (
                           <button className="text-blue-600 hover:text-blue-900 flex items-center space-x-1">
                             <SafeIcon icon={FiDownload} className="w-4 h-4" />
                             <span>Descargar</span>
@@ -509,7 +405,9 @@ const BillingManagement = () => {
               {plans.map((plan) => (
                 <div
                   key={plan.id}
-                  className={`border-2 rounded-xl p-6 relative ${plan.popular ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
+                  className={`border-2 rounded-xl p-6 relative ${
+                    plan.popular ? 'border-purple-500 bg-purple-50' : 'border-gray-200'
+                  }`}
                 >
                   {plan.popular && (
                     <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
@@ -521,7 +419,7 @@ const BillingManagement = () => {
                   )}
 
                   <div className="text-center mb-6">
-                    <SafeIcon icon={plan.icon} className="w-12 h-12 text-blue-600 mx-auto mb-3" />
+                    <SafeIcon icon={plan.icon || FiTruck} className="w-12 h-12 text-blue-600 mx-auto mb-3" />
                     <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
                     <div className="text-3xl font-bold text-gray-900 mb-1">
                       ${plan.price}
@@ -539,17 +437,22 @@ const BillingManagement = () => {
                   </ul>
 
                   <button
-                    onClick={() => {
-                      handleUpgrade(plan);
-                      setShowUpgradeModal(false);
-                    }}
-                    className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors ${
+                    onClick={() => handleUpgrade(plan)}
+                    disabled={processing}
+                    className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors disabled:opacity-50 ${
                       plan.popular
                         ? 'bg-purple-600 text-white hover:bg-purple-700'
                         : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                     }`}
                   >
-                    {currentPlan && currentPlan.id === plan.id ? 'Plan Actual' : 'Seleccionar Plan'}
+                    {processing ? (
+                      <div className="flex items-center justify-center">
+                        <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                        Procesando...
+                      </div>
+                    ) : (
+                      currentPlan && currentPlan.id === plan.id ? 'Plan Actual' : 'Seleccionar Plan'
+                    )}
                   </button>
                 </div>
               ))}
