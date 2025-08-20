@@ -7,6 +7,8 @@ import PointManagement from './admin/PointManagement';
 import RecordsView from './admin/RecordsView';
 import Dashboard from './admin/Dashboard';
 import WorkspaceManagement from './admin/WorkspaceManagement';
+import ProfileManagement from './admin/ProfileManagement';
+import BillingManagement from './admin/BillingManagement';
 
 const AdminDashboard = () => {
   return (
@@ -18,6 +20,8 @@ const AdminDashboard = () => {
         <Route path="/points" element={<PointManagement />} />
         <Route path="/records" element={<RecordsView />} />
         <Route path="/workspaces" element={<WorkspaceManagement />} />
+        <Route path="/profile" element={<ProfileManagement />} />
+        <Route path="/billing" element={<BillingManagement />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>
     </AdminLayout>
