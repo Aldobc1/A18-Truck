@@ -21,7 +21,7 @@ export const SUBSCRIPTION_PLANS = {
     price: 499,
     currency: 'MXN',
     interval: 'mes',
-    priceId: 'price_1QdOl53xfQJC1PHSMhEJvqvZ', // Reemplaza con tu Price ID real
+    priceId: 'price_1RxvqZ3xfQJC1PHSbDFoTgwS',
     paymentLink: 'https://buy.stripe.com/cNi28kd7n9s2fANgikaVa03',
     features: [
       'Hasta 10 camiones',
@@ -36,7 +36,7 @@ export const SUBSCRIPTION_PLANS = {
     price: 899,
     currency: 'MXN',
     interval: 'mes',
-    priceId: 'price_1QdOl53xfQJC1PHSMhEJvqvZ', // Reemplaza con tu Price ID real
+    priceId: 'price_1Rxvqo3xfQJC1PHSPK9dKCBW',
     paymentLink: 'https://buy.stripe.com/aFa7sEgjz7jU3S5fegaVa04',
     features: [
       'Hasta 50 camiones',
@@ -52,7 +52,7 @@ export const SUBSCRIPTION_PLANS = {
     price: 1499,
     currency: 'MXN',
     interval: 'mes',
-    priceId: 'price_1QdOl53xfQJC1PHSMhEJvqvZ', // Reemplaza con tu Price ID real
+    priceId: 'price_1RxvrB3xfQJC1PHS4q6Ty9FK',
     paymentLink: 'https://buy.stripe.com/14AcMYc3jfQqfANc24aVa05',
     features: [
       'Camiones ilimitados',
@@ -65,7 +65,7 @@ export const SUBSCRIPTION_PLANS = {
   }
 };
 
-// Función para crear checkout session con datos pre-poblados
+// Función para crear checkout session con datos pre-poblados mejorada
 export const createCheckoutSession = async (planId, userEmail, userName) => {
   try {
     const plan = SUBSCRIPTION_PLANS[planId];
@@ -73,13 +73,37 @@ export const createCheckoutSession = async (planId, userEmail, userName) => {
       throw new Error('Plan no encontrado');
     }
 
-    // Llamar a tu función de Supabase Edge Function para crear la sesión
+    // Obtener el token de autenticación actual
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    // Obtener información adicional del usuario desde la base de datos
+    const { data: userProfile } = await supabase
+      .from('users_a18')
+      .select('name, phone')
+      .eq('id', session.user.id)
+      .single();
+
+    // Preparar los datos del usuario con toda la información disponible
+    const customerData = {
+      email: userEmail || session.user.email,
+      name: userName || userProfile?.name || '',
+      phone: userProfile?.phone || ''
+    };
+
+    console.log('Creating checkout session with user data:', customerData);
+
+    // Llamar a la función de Supabase Edge Function para crear la sesión
     const { data, error } = await supabase.functions.invoke('create-checkout-session', {
       body: {
         priceId: plan.priceId,
         planId: planId,
-        customerEmail: userEmail,
-        customerName: userName,
+        customerEmail: customerData.email,
+        customerName: customerData.name,
+        customerPhone: customerData.phone,
         successUrl: `${window.location.origin}/#/admin/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${window.location.origin}/#/admin/billing?canceled=true`
       }
