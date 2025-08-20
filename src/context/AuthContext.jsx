@@ -21,16 +21,26 @@ export const AuthProvider = ({ children }) => {
     const checkSession = async () => {
       try {
         setLoading(true);
-        // Get session from Supabase
-        const { data: { session }, error } = await supabase.auth.getSession();
 
+        // ✅ MEJOR MANEJO DE SESIÓN
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
         if (error) {
           console.error('Error checking auth session:', error);
           setAuthError(error.message);
           return;
         }
 
-        if (session) {
+        if (session?.user) {
+          // ✅ VALIDAR QUE EL TOKEN TENGA EL CLAIM SUB
+          if (!session.user.id) {
+            console.error('Invalid session: missing user ID');
+            await supabase.auth.signOut();
+            setUser(null);
+            setAuthError("Sesión inválida. Por favor, inicia sesión nuevamente.");
+            return;
+          }
+
           // Get user profile data
           const { data: userData, error: userError } = await supabase
             .from('users_a18')
@@ -70,7 +80,17 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event);
+        
         if (event === 'SIGNED_IN' && session) {
+          // ✅ VALIDAR SESIÓN AL INICIAR SESIÓN
+          if (!session.user?.id) {
+            console.error('Invalid session on sign in: missing user ID');
+            await supabase.auth.signOut();
+            setUser(null);
+            setAuthError("Sesión inválida. Por favor, inicia sesión nuevamente.");
+            return;
+          }
+
           // Get user profile data on sign in
           const { data: userData, error: userError } = await supabase
             .from('users_a18')
@@ -110,6 +130,7 @@ export const AuthProvider = ({ children }) => {
   // Signin with email and password
   const login = async (email, password) => {
     setAuthError(null);
+    
     try {
       // Para propósitos de demo, usar login simulado para credenciales específicas
       if (email === 'barbacastillo@gmail.com' && password === 'admin123') {
@@ -154,7 +175,7 @@ export const AuthProvider = ({ children }) => {
         return userData;
       }
 
-      // Autenticación real con Supabase
+      // ✅ AUTENTICACIÓN REAL CON MEJOR VALIDACIÓN
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -162,6 +183,11 @@ export const AuthProvider = ({ children }) => {
 
       if (error) {
         throw new Error(error.message);
+      }
+
+      // ✅ VALIDAR QUE LA RESPUESTA TENGA USER ID
+      if (!data.user?.id) {
+        throw new Error("Respuesta de autenticación inválida: falta ID de usuario");
       }
 
       // Obtener perfil de usuario con información de rol
@@ -194,6 +220,7 @@ export const AuthProvider = ({ children }) => {
   // Sign up with email and password
   const signUp = async (email, password) => {
     setAuthError(null);
+    
     try {
       // Registrar usuario en Supabase Auth
       const { data, error } = await supabase.auth.signUp({
@@ -231,6 +258,7 @@ export const AuthProvider = ({ children }) => {
           } catch (cleanupError) {
             console.error('Could not clean up auth user:', cleanupError);
           }
+          
           return { success: false, error: `No se pudo crear tu perfil de usuario: ${profileError.message}` };
         }
       }
@@ -248,7 +276,7 @@ export const AuthProvider = ({ children }) => {
       // Para propósitos de demo, solo limpiar localStorage
       setUser(null);
       localStorage.removeItem('truckApp_user');
-      
+
       // Cierre de sesión real en Supabase
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
@@ -263,9 +291,11 @@ export const AuthProvider = ({ children }) => {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/#/reset-password`,
       });
+
       if (error) {
         throw error;
       }
+
       return { success: true };
     } catch (error) {
       setAuthError(error.message);
@@ -279,9 +309,11 @@ export const AuthProvider = ({ children }) => {
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
+
       if (error) {
         throw error;
       }
+
       return { success: true };
     } catch (error) {
       setAuthError(error.message);

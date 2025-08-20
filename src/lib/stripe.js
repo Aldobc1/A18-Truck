@@ -65,80 +65,205 @@ export const SUBSCRIPTION_PLANS = {
   }
 };
 
-// Función para crear checkout session con datos pre-poblados mejorada
+// ✅ FUNCIÓN CON DEBUG DETALLADO
 export const createCheckoutSession = async (planId, userEmail, userName) => {
+  console.group('🚀 DEBUG: createCheckoutSession');
+  console.log('📋 Parámetros iniciales:', { planId, userEmail, userName });
+  
   try {
+    // PASO 1: Validar plan
+    console.log('📝 PASO 1: Validando plan...');
     const plan = SUBSCRIPTION_PLANS[planId];
     if (!plan) {
       throw new Error('Plan no encontrado');
     }
+    console.log('✅ Plan encontrado:', plan);
 
-    // Obtener el token de autenticación actual
-    const { data: { session } } = await supabase.auth.getSession();
+    // PASO 2: Obtener sesión de Supabase
+    console.log('🔐 PASO 2: Obteniendo sesión de Supabase...');
+    let session;
+    let accessToken;
     
-    if (!session) {
-      throw new Error('Usuario no autenticado');
-    }
-
-    // Obtener información adicional del usuario desde la base de datos
-    const { data: userProfile } = await supabase
-      .from('users_a18')
-      .select('name, phone')
-      .eq('id', session.user.id)
-      .single();
-
-    // Preparar los datos del usuario con toda la información disponible
-    const customerData = {
-      email: userEmail || session.user.email,
-      name: userName || userProfile?.name || '',
-      phone: userProfile?.phone || ''
-    };
-
-    console.log('Creating checkout session with user data:', customerData);
-
-    // Llamar a la función de Supabase Edge Function para crear la sesión
-    const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-      body: {
-        priceId: plan.priceId,
-        planId: planId,
-        customerEmail: customerData.email,
-        customerName: customerData.name,
-        customerPhone: customerData.phone,
-        successUrl: `${window.location.origin}/#/admin/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: `${window.location.origin}/#/admin/billing?canceled=true`
+    try {
+      const sessionResponse = await supabase.auth.getSession();
+      console.log('📊 Respuesta completa de getSession:', sessionResponse);
+      
+      const { data: { session: currentSession }, error: sessionError } = sessionResponse;
+      
+      if (sessionError) {
+        console.error('❌ Error obteniendo sesión:', sessionError);
+        throw new Error(`Error de sesión: ${sessionError.message}`);
       }
-    });
+      
+      if (!currentSession) {
+        console.error('❌ No hay sesión activa');
+        throw new Error('No hay sesión activa. Por favor inicia sesión nuevamente.');
+      }
 
-    if (error) {
-      console.error('Error creating checkout session:', error);
-      // Fallback a payment link si falla la creación de sesión
+      if (!currentSession.access_token) {
+        console.error('❌ Token de acceso no disponible');
+        throw new Error('Token de acceso no disponible');
+      }
+
+      session = currentSession;
+      accessToken = currentSession.access_token;
+      
+      console.log('✅ Sesión obtenida exitosamente:');
+      console.log('   - Usuario ID:', session.user?.id);
+      console.log('   - Email:', session.user?.email);
+      console.log('   - Token length:', accessToken?.length);
+      
+    } catch (sessionErr) {
+      console.error('❌ Error en manejo de sesión:', sessionErr);
+      console.log('🔄 Fallback a payment link por error de sesión');
+      console.groupEnd();
       return redirectToStripeCheckout(planId);
     }
 
-    if (data?.url) {
-      window.location.href = data.url;
-    } else {
-      throw new Error('No se pudo crear la sesión de pago');
+    // PASO 3: Obtener perfil del usuario
+    console.log('👤 PASO 3: Obteniendo perfil del usuario...');
+    let userProfile = {};
+    try {
+      const profileResponse = await supabase
+        .from('users_a18')
+        .select('name, phone')
+        .eq('id', session.user.id)
+        .single();
+      
+      console.log('📊 Respuesta de perfil:', profileResponse);
+      userProfile = profileResponse.data || {};
+      console.log('✅ Perfil del usuario:', userProfile);
+    } catch (profileErr) {
+      console.warn('⚠️ No se pudo obtener perfil del usuario:', profileErr);
     }
+
+    // PASO 4: Preparar datos del cliente
+    console.log('📋 PASO 4: Preparando datos del cliente...');
+    const customerData = {
+      email: userEmail || session.user.email,
+      name: userName || userProfile.name || '',
+      phone: userProfile.phone || ''
+    };
+    console.log('✅ Datos del cliente preparados:', customerData);
+
+    // PASO 5: Preparar payload para función Edge
+    console.log('📦 PASO 5: Preparando payload para función Edge...');
+    const payload = {
+      priceId: plan.priceId,
+      planId: planId,
+      customerEmail: customerData.email,
+      customerName: customerData.name,
+      customerPhone: customerData.phone,
+      successUrl: `${window.location.origin}/#/admin/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${window.location.origin}/#/admin/billing?canceled=true`
+    };
+    console.log('✅ Payload preparado:', payload);
+
+    // PASO 6: Invocar función Edge
+    console.log('📡 PASO 6: Invocando función Edge...');
+    console.log('   - URL de función: create-checkout-session');
+    console.log('   - Headers de autorización: Bearer [TOKEN]');
+    
+    let response;
+    try {
+      const edgeResponse = await supabase.functions.invoke('create-checkout-session', {
+        body: payload,
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('📊 Respuesta completa de función Edge:', edgeResponse);
+      
+      if (edgeResponse.error) {
+        console.error('❌ Error de función Edge:', edgeResponse.error);
+        throw edgeResponse.error;
+      }
+
+      response = edgeResponse.data;
+      console.log('✅ Datos de respuesta:', response);
+
+    } catch (edgeErr) {
+      console.error('❌ Error invocando función Edge:', edgeErr);
+      console.error('   - Mensaje:', edgeErr.message);
+      console.error('   - Stack:', edgeErr.stack);
+      
+      // Verificar si es un error de autenticación específico
+      const errorMessage = edgeErr.message || edgeErr.toString();
+      if (errorMessage.includes('authentication') || errorMessage.includes('sub claim') || errorMessage.includes('invalid claim')) {
+        console.log('🔄 Error de autenticación detectado, usando payment link');
+        console.groupEnd();
+        return redirectToStripeCheckout(planId);
+      }
+      
+      throw edgeErr;
+    }
+
+    // PASO 7: Procesar respuesta
+    console.log('✅ PASO 7: Procesando respuesta...');
+    if (response?.url) {
+      console.log('🎉 ¡Checkout session creado exitosamente!');
+      console.log('   - URL de checkout:', response.url);
+      console.groupEnd();
+      window.location.href = response.url;
+    } else {
+      console.error('❌ Respuesta inválida de la función Edge:', response);
+      throw new Error('No se recibió URL de checkout');
+    }
+    
   } catch (err) {
-    console.error('Error in createCheckoutSession:', err);
-    // Fallback a payment link
+    console.error('❌ ERROR GENERAL en createCheckoutSession:');
+    console.error('   - Mensaje:', err.message);
+    console.error('   - Stack completo:', err.stack);
+    console.error('   - Objeto completo:', err);
+    
+    // Mostrar mensaje específico al usuario
+    const userMessage = err.message?.includes('authentication') || err.message?.includes('session')
+      ? 'Error de autenticación. Redirigiendo a checkout externo...'
+      : `Error al procesar: ${err.message}`;
+    
+    // Mostrar mensaje temporal al usuario
+    if (typeof alert !== 'undefined') {
+      alert(userMessage);
+    }
+    
+    // Fallback final a payment link
+    console.log('🔄 Fallback final a payment link');
+    console.groupEnd();
     return redirectToStripeCheckout(planId);
   }
 };
 
-// Función de respaldo para redirigir a Stripe Payment Link
+// Función de respaldo con debug
 export const redirectToStripeCheckout = async (planId) => {
+  console.group('🔗 DEBUG: redirectToStripeCheckout');
+  console.log('📋 Plan ID:', planId);
+  
   const plan = SUBSCRIPTION_PLANS[planId];
   if (!plan) {
+    console.error('❌ Plan no encontrado para ID:', planId);
+    console.groupEnd();
     throw new Error('Plan no encontrado');
   }
+
+  console.log('✅ Plan encontrado:', plan);
+  console.log('🔗 Payment Link:', plan.paymentLink);
   
-  // Redirigir al payment link de Stripe (sin pre-población)
-  window.location.href = plan.paymentLink;
+  try {
+    console.log('🚀 Redirigiendo a Stripe Payment Link...');
+    window.location.href = plan.paymentLink;
+    console.groupEnd();
+  } catch (err) {
+    console.error('❌ Error redirigiendo a payment link:', err);
+    // Como último recurso, abrir en nueva ventana
+    console.log('🆘 Último recurso: abrir en nueva ventana');
+    window.open(plan.paymentLink, '_blank');
+    console.groupEnd();
+  }
 };
 
-// Función para manejar el webhook de Stripe
+// Resto de funciones sin cambios...
 export const handleStripeWebhook = async (event) => {
   try {
     switch (event.type) {
@@ -146,23 +271,19 @@ export const handleStripeWebhook = async (event) => {
         const session = event.data.object;
         await handleSuccessfulPayment(session);
         break;
-      
       case 'invoice.payment_succeeded':
         const invoice = event.data.object;
         await handleInvoicePayment(invoice);
         break;
-      
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
         const subscription = event.data.object;
         await handleSubscriptionUpdate(subscription);
         break;
-      
       case 'customer.subscription.deleted':
         const deletedSubscription = event.data.object;
         await handleSubscriptionCancellation(deletedSubscription);
         break;
-      
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
